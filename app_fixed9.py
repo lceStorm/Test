@@ -33,42 +33,35 @@ import streamlit as st
 from docx import Document
 from docx.oxml.ns import qn
 
-st.set_page_config(page_title="Тесты из DOCX/TXT (с картинками/формулами)", layout="wide")
+st.set_page_config(page_title="Тесты из DOCX/TXT (с картинками/формулами, initial_sidebar_state="collapsed")", layout="wide")
 
-# -----------------------------
-# UI: компактный режим (для телефона)
-# -----------------------------
-if "ui_compact" not in st.session_state:
-    # По умолчанию включаем компактный режим
-    st.session_state.ui_compact = True
+
+
+# --- UI: компактный режим (удобнее на телефоне) ---
+if "compact_ui" not in st.session_state:
+    st.session_state["compact_ui"] = True
 
 with st.sidebar:
     st.markdown("### Интерфейс")
-    st.session_state.ui_compact = st.checkbox(
-        "Компактный режим (телефон)",
-        value=st.session_state.ui_compact,
-        help="Уменьшает отступы и сворачивает часть блоков, чтобы меньше листать на телефоне.",
-    )
+    st.session_state["compact_ui"] = st.checkbox("Компактный режим (телефон)", value=st.session_state["compact_ui"])
 
-_COMPACT = bool(st.session_state.ui_compact)
+_COMPACT = bool(st.session_state.get("compact_ui", True))
 
 if _COMPACT:
     st.markdown(
         """
         <style>
-        /* Уменьшаем отступы основного контейнера */
-        .block-container { padding-top: 1rem; padding-bottom: 1rem; padding-left: 0.9rem; padding-right: 0.9rem; }
-        /* Уменьшаем вертикальные промежутки между элементами */
-        div[data-testid="stVerticalBlock"] { gap: 0.55rem; }
-        /* Чуть компактнее заголовки */
-        h1, h2, h3 { margin-top: 0.3rem; margin-bottom: 0.3rem; }
-        /* Убираем нижний футер Streamlit */
-        footer { visibility: hidden; height: 0; }
+          /* уменьшаем верхний отступ и общий вертикальный “воздух” */
+          .block-container {padding-top: 1.0rem; padding-bottom: 1.0rem;}
+          /* делаем элементы чуть компактнее */
+          [data-testid="stVerticalBlock"] {gap: 0.35rem;}
+          /* уменьшаем отступы внутри экспандеров */
+          details > summary {padding: 0.2rem 0;}
         </style>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
-
+# --- /UI ---
 
 def safe_rerun():
     """Совместимость Streamlit: rerun/experimental_rerun."""
@@ -256,7 +249,7 @@ def ensure_png_bytes(image_bytes: bytes, ext_hint: Optional[str] = None) -> Tupl
         return image_bytes, (ext_hint or "png"), True, ""
 
     if not has_imagemagick():
-        return image_bytes, (ext_hint or "wmf"), False, "Нет ImageMagick (magick/convert) — WMF/EMF не конвертируется."
+        return image_bytes, (ext_hint or "wmf"), False, "Нет ImageMagick (magick) — WMF/EMF не конвертируется."
 
     with tempfile.TemporaryDirectory() as td:
         in_path = os.path.join(td, f"in.{ext_hint or 'wmf'}")
@@ -275,8 +268,7 @@ def ensure_png_bytes(image_bytes: bytes, ext_hint: Optional[str] = None) -> Tupl
                     run_kwargs["startupinfo"] = si
                 except Exception:
                     pass
-            subprocess.run(
-                imagemagick_cmd() + [in_path, out_path],
+            subprocess.run(imagemagick_cmd() + [in_path, out_path],
                 **run_kwargs,
             )
             with open(out_path, "rb") as f:
@@ -1654,7 +1646,7 @@ with st.sidebar:
 
 if not has_imagemagick():
     st.warning(
-        "ImageMagick (magick/convert) не найден. WMF/EMF формулы могут не отображаться как картинки, "
+        "ImageMagick (magick) не найден. WMF/EMF формулы могут не отображаться как картинки, "
         "но структура вопросов/ответов будет правильной."
     )
 
@@ -1721,10 +1713,7 @@ st.session_state.mode = st.radio("Режим", ["Разметка ответов
 # Разметка
 # =============================
 if st.session_state.mode == "Разметка ответов":
-    if _COMPACT:
-        st.caption("Разметка ответов")
-    else:
-        st.subheader("Разметка ответов")
+    st.subheader("Разметка ответов")
 
     total = len(data)
 
@@ -1949,21 +1938,17 @@ if st.session_state.mode == "Разметка ответов":
 # Тестирование
 # =============================
 else:
-    if _COMPACT:
-        st.caption("Тестирование")
-    else:
-        st.subheader("Тестирование")
+    st.subheader("Тестирование")
 
-    with st.expander("Управление тестом", expanded=not _COMPACT):
-        c1, c2, c3 = st.columns([1, 1, 2])
-        with c1:
-            if st.button("Начать заново"):
-                reset_testing_state()
-                st.success("Тест начат заново.")
-        with c2:
-            if st.button("К результатам"):
-                finish_to_results(reason="manual")
-                safe_rerun()
+    c1, c2, c3 = st.columns([1, 1, 2])
+    with c1:
+        if st.button("Начать заново"):
+            reset_testing_state()
+            st.success("Тест начат заново.")
+    with c2:
+        if st.button("К результатам"):
+            finish_to_results(reason="manual")
+            safe_rerun()
 
     # База теста (все или только размеченные)
     base_indices = get_test_indices(data, bool(st.session_state.test_only_marked))
@@ -2136,10 +2121,7 @@ else:
             finish_to_results(reason="manual")
             safe_rerun()
     with nav4:
-        if _COMPACT:
-            st.caption("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
-        else:
-            st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
+        st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
 
     title = f"## Вопрос {global_idx+1} из {len(data)}"
     if is_review:
@@ -2158,28 +2140,42 @@ else:
         st.warning("Не задан правильный ответ. Перейдите в “Разметка ответов” или включите «Тестировать только размеченные вопросы».")
         st.stop()
 
-    selected = st.session_state.user_answers.get(global_idx)
+    selected = st.session_state.user_answers.get(global_idx)st.markdown("### Варианты (нажмите на букву, чтобы выбрать)")
+view = prepare_option_view(global_idx, opts)
 
-    if _COMPACT:
-        st.caption("Варианты (нажмите на кнопку буквы, чтобы выбрать)")
-    else:
-        st.markdown("### Варианты (нажмите на букву, чтобы выбрать)")
-    view = prepare_option_view(global_idx, opts)
-    display_by_orig = {orig: disp for (disp, orig) in view}
-    orig_by_display = {disp: orig for (disp, orig) in view}
+# Защита от некорректного формата view (иногда в окружениях/после правок может прийти не список пар).
+# Нормализуем к виду List[Tuple[display, original]].
+norm_view = []
+try:
+    for item in list(view):
+        if isinstance(item, (list, tuple)) and len(item) == 2:
+            disp, orig = item
+        elif isinstance(item, str):
+            disp = orig = item
+        else:
+            continue
+        norm_view.append((str(disp), str(orig)))
+except Exception:
+    norm_view = []
+
+if not norm_view:
+    # Фоллбэк: показываем как есть, без переназначения букв
+    norm_view = [(k, k) for k in prepare_option_order(global_idx, list(opts.keys()))]
+
+view = norm_view
+display_by_orig = {orig: disp for (disp, orig) in view}
+orig_by_display = {disp: orig for (disp, orig) in view}
 
 for disp, orig in view:
-    # На телефоне колонки часто "ломаются" в две строки и занимают больше места,
-    # поэтому делаем более компактный вертикальный вариант.
-    btn_label = ("✅ " if selected == orig else "") + f"{disp})"
-    if st.button(btn_label, key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
-        st.session_state.user_answers[global_idx] = orig
-        selected = orig
-
-    render_rich_text(opts[orig], images_map)
-
-    # небольшой отступ только в не-компактном режиме
-    if not _COMPACT:
+        row = st.columns([1, 25])
+        with row[0]:
+            if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
+                st.session_state.user_answers[global_idx] = orig
+                selected = orig
+            if selected == orig:
+                st.markdown("✅")
+        with row[1]:
+            render_rich_text(opts[orig], images_map)
         st.write("")
 
     selected_disp = display_by_orig.get(selected, str(selected)) if selected is not None else None
