@@ -2140,7 +2140,8 @@ else:
         st.warning("Не задан правильный ответ. Перейдите в “Разметка ответов” или включите «Тестировать только размеченные вопросы».")
         st.stop()
 
-    selected = st.session_state.user_answers.get(global_idx)st.markdown("### Варианты (нажмите на букву, чтобы выбрать)")
+    selected = st.session_state.user_answers.get(global_idx)
+    st.markdown("### Варианты (нажмите на букву, чтобы выбрать)")
 view = prepare_option_view(global_idx, opts)
 
 # Защита от некорректного формата view (иногда в окружениях/после правок может прийти не список пар).
