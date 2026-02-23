@@ -1620,7 +1620,7 @@ with st.sidebar:
 
 if not has_imagemagick():
     st.warning(
-        "ImageMagick (magick) не найден. WMF/EMF формулы могут не отображаться как картинки, "
+        "ImageMagick (magick/convert) не найден. WMF/EMF формулы могут не отображаться как картинки, "
         "но структура вопросов/ответов будет правильной."
     )
 
@@ -1687,7 +1687,7 @@ st.session_state.mode = st.radio("Режим", ["Разметка ответов
 # Разметка
 # =============================
 if st.session_state.mode == "Разметка ответов":
-    st.subheader("Разметка ответов")
+    st.caption("Разметка ответов") if _COMPACT else st.subheader("Разметка ответов")
 
     total = len(data)
 
@@ -1912,17 +1912,18 @@ if st.session_state.mode == "Разметка ответов":
 # Тестирование
 # =============================
 else:
-    st.subheader("Тестирование")
+    st.caption("Тестирование") if _COMPACT else st.subheader("Тестирование")
 
-    c1, c2, c3 = st.columns([1, 1, 2])
-    with c1:
-        if st.button("Начать заново"):
-            reset_testing_state()
-            st.success("Тест начат заново.")
-    with c2:
-        if st.button("К результатам"):
-            finish_to_results(reason="manual")
-            safe_rerun()
+    with st.expander("Управление тестом", expanded=not _COMPACT):
+        c1, c2, c3 = st.columns([1, 1, 2])
+        with c1:
+            if st.button("Начать заново"):
+                reset_testing_state()
+                st.success("Тест начат заново.")
+        with c2:
+            if st.button("К результатам"):
+                finish_to_results(reason="manual")
+                safe_rerun()
 
     # База теста (все или только размеченные)
     base_indices = get_test_indices(data, bool(st.session_state.test_only_marked))
@@ -2095,7 +2096,7 @@ else:
             finish_to_results(reason="manual")
             safe_rerun()
     with nav4:
-        st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
+        (st.caption("Можно завершить в любой момент — неотвеченные будут считаться неверными.") if _COMPACT else st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными."))
 
     title = f"## Вопрос {global_idx+1} из {len(data)}"
     if is_review:
@@ -2116,21 +2117,23 @@ else:
 
     selected = st.session_state.user_answers.get(global_idx)
 
-    st.markdown("### Варианты (нажмите на букву, чтобы выбрать)")
+    (st.caption("Варианты (нажмите на кнопку буквы, чтобы выбрать)") if _COMPACT else st.markdown("### Варианты (нажмите на букву, чтобы выбрать)"))
     view = prepare_option_view(global_idx, opts)
     display_by_orig = {orig: disp for (disp, orig) in view}
     orig_by_display = {disp: orig for (disp, orig) in view}
 
-    for disp, orig in view:
-        row = st.columns([1, 25])
-        with row[0]:
-            if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
-                st.session_state.user_answers[global_idx] = orig
-                selected = orig
-            if selected == orig:
-                st.markdown("✅")
-        with row[1]:
-            render_rich_text(opts[orig], images_map)
+for disp, orig in view:
+    # На телефоне колонки часто "ломаются" в две строки и занимают больше места,
+    # поэтому делаем более компактный вертикальный вариант.
+    btn_label = ("✅ " if selected == orig else "") + f"{disp})"
+    if st.button(btn_label, key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
+        st.session_state.user_answers[global_idx] = orig
+        selected = orig
+
+    render_rich_text(opts[orig], images_map)
+
+    # небольшой отступ только в не-компактном режиме
+    if not _COMPACT:
         st.write("")
 
     selected_disp = display_by_orig.get(selected, str(selected)) if selected is not None else None
