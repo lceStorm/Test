@@ -1,0 +1,9 @@
+[server]
+# Для Community Cloud обычно ничего менять не надо.
+# Эти параметры полезны при локальном запуске.
+headless = true
+enableCORS = false
+enableXsrfProtection = true
+
+[client]
+showErrorDetails = true

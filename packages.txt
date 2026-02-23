@@ -1,3 +1,19 @@
-imagemagick
-libwmf-bin
-ghostscript
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+.DS_Store
+*.log
+# Streamlit secrets (не коммитить)
+.streamlit/secrets.toml
