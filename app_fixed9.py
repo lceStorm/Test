@@ -58,7 +58,13 @@ if _COMPACT:
           /* уменьшаем отступы внутри экспандеров */
           details > summary {padding: 0.2rem 0;}
                   .qtitle{font-size:0.95rem;font-weight:600;line-height:1.2;margin:0.2rem 0 0.6rem 0;}
-        </style>
+        
+          /* кнопки компактнее */
+          .stButton>button {padding: 0.25rem 0.5rem; font-size: 0.90rem;}
+          /* чуть меньше вертикальные отступы у заголовков */
+          h1, h2, h3 {margin-bottom: 0.3rem;}
+
+</style>
         """,
         unsafe_allow_html=True
     )
@@ -1708,7 +1714,20 @@ if data is None:
 if st.session_state.loaded_file_name:
     st.caption(f"Файл: {st.session_state.loaded_file_name} · Вопросов: {len(data)}")
 
-st.session_state.mode = st.radio("Режим", ["Разметка ответов", "Тестирование"], horizontal=True)
+# Режим: на телефоне — в боковой панели, на ПК — горизонтально сверху
+if _COMPACT:
+    with st.sidebar:
+        st.markdown("### Режим")
+        _cur_mode = st.session_state.get("mode") or "Разметка ответов"
+        st.session_state.mode = st.radio(
+            "Режим",
+            ["Разметка ответов", "Тестирование"],
+            index=0 if _cur_mode == "Разметка ответов" else 1,
+            label_visibility="collapsed",
+        )
+else:
+    st.session_state.mode = st.radio("Режим", ["Разметка ответов", "Тестирование"], horizontal=True)
+
 
 # =============================
 # Разметка
@@ -1736,43 +1755,130 @@ if st.session_state.mode == "Разметка ответов":
             marked += 1
     st.caption(f"Размечено: {marked}/{total}")
 
-    # --- Верхняя панель управления (без expander) ---
-    c0, c1, c2, c3, c4 = st.columns([1.2, 1.6, 1.6, 1.4, 2.2])
+    # --- Панель управления разметкой ---
 
-    with c0:
-        if st.button("Сбросить ответы тестирования"):
-            reset_testing_state()
-            st.success("Ответы тестирования сброшены.")
+    if _COMPACT:
 
-    with c1:
-        view_modes = ["По одному (быстро)", "Страницей", "Списком (медленно)"]
-        if st.session_state.get("mark_view_mode") not in view_modes:
-            st.session_state.mark_view_mode = view_modes[0]
-        st.selectbox("Отображение", view_modes, key="mark_view_mode")
+        with st.sidebar:
 
-    with c2:
-        st.checkbox("Показывать варианты", key="mark_show_variants")
-        if "mark_auto_advance" not in st.session_state:
-            st.session_state.mark_auto_advance = True
-        st.checkbox("Автопереход к следующему неразмеченному", key="mark_auto_advance")
+            with st.expander("⚙️ Разметка", expanded=False):
 
-    with c3:
-        st.number_input("Размер страницы", min_value=5, max_value=50, step=5, key="mark_page_size")
+                if st.button("🧹 Сбросить ответы тестирования", key="mark_reset_testing_btn"):
 
-    with c4:
-        # "прыжок" к вопросу (без лагов и без ошибки session_state)
-        if "mark_jump_dirty" not in st.session_state:
-            st.session_state.mark_jump_dirty = True
+                    reset_testing_state()
 
-        # Синхронизируем число в инпуте ТОЛЬКО когда индекс менялся программно
-        if ("mark_jump" not in st.session_state) or st.session_state.mark_jump_dirty:
-            st.session_state.mark_jump = int(st.session_state.mark_index) + 1
-            st.session_state.mark_jump_dirty = False
+                    st.success("Ответы тестирования сброшены.")
 
-        st.number_input("Перейти к №", min_value=1, max_value=total, step=1, key="mark_jump")
-        new_index = int(st.session_state.mark_jump) - 1
-        if new_index != int(st.session_state.mark_index):
-            st.session_state.mark_index = new_index
+
+                view_modes = ["По одному (быстро)", "Страницей", "Списком (медленно)"]
+
+                if st.session_state.get("mark_view_mode") not in view_modes:
+
+                    st.session_state.mark_view_mode = view_modes[0]
+
+                st.selectbox("Отображение", view_modes, key="mark_view_mode")
+
+
+                st.checkbox("Показывать варианты", key="mark_show_variants")
+
+                if "mark_auto_advance" not in st.session_state:
+
+                    st.session_state.mark_auto_advance = True
+
+                st.checkbox("Автопереход к следующему неразмеченному", key="mark_auto_advance")
+
+
+                st.number_input("Размер страницы", min_value=5, max_value=50, step=5, key="mark_page_size")
+
+
+                # "прыжок" к вопросу (без лагов и без ошибки session_state)
+
+                if "mark_jump_dirty" not in st.session_state:
+
+                    st.session_state.mark_jump_dirty = True
+
+                if ("mark_jump" not in st.session_state) or st.session_state.mark_jump_dirty:
+
+                    st.session_state.mark_jump = int(st.session_state.mark_index) + 1
+
+                    st.session_state.mark_jump_dirty = False
+
+                st.number_input("Перейти к №", min_value=1, max_value=total, step=1, key="mark_jump")
+
+                new_index = int(st.session_state.mark_jump) - 1
+
+                if new_index != int(st.session_state.mark_index):
+
+                    st.session_state.mark_index = new_index
+
+    else:
+
+        # --- Верхняя панель управления (без expander) ---
+
+        c0, c1, c2, c3, c4 = st.columns([1.2, 1.6, 1.6, 1.4, 2.2])
+
+
+        with c0:
+
+            if st.button("Сбросить ответы тестирования"):
+
+                reset_testing_state()
+
+                st.success("Ответы тестирования сброшены.")
+
+
+        with c1:
+
+            view_modes = ["По одному (быстро)", "Страницей", "Списком (медленно)"]
+
+            if st.session_state.get("mark_view_mode") not in view_modes:
+
+                st.session_state.mark_view_mode = view_modes[0]
+
+            st.selectbox("Отображение", view_modes, key="mark_view_mode")
+
+
+        with c2:
+
+            st.checkbox("Показывать варианты", key="mark_show_variants")
+
+            if "mark_auto_advance" not in st.session_state:
+
+                st.session_state.mark_auto_advance = True
+
+            st.checkbox("Автопереход к следующему неразмеченному", key="mark_auto_advance")
+
+
+        with c3:
+
+            st.number_input("Размер страницы", min_value=5, max_value=50, step=5, key="mark_page_size")
+
+
+        with c4:
+
+            # "прыжок" к вопросу (без лагов и без ошибки session_state)
+
+            if "mark_jump_dirty" not in st.session_state:
+
+                st.session_state.mark_jump_dirty = True
+
+
+            # Синхронизируем число в инпуте ТОЛЬКО когда индекс менялся программно
+
+            if ("mark_jump" not in st.session_state) or st.session_state.mark_jump_dirty:
+
+                st.session_state.mark_jump = int(st.session_state.mark_index) + 1
+
+                st.session_state.mark_jump_dirty = False
+
+
+            st.number_input("Перейти к №", min_value=1, max_value=total, step=1, key="mark_jump")
+
+            new_index = int(st.session_state.mark_jump) - 1
+
+            if new_index != int(st.session_state.mark_index):
+
+                st.session_state.mark_index = new_index
 
     def set_mark_index(i: int):
         i = max(0, min(total - 1, int(i)))
@@ -1848,9 +1954,15 @@ if st.session_state.mode == "Разметка ответов":
 
 
         if st.session_state.get("mark_show_variants", True):
-            for L in letters:
-                st.markdown(f"**{L})**")
-                render_rich_text_indented(opts.get(L, ""), images_map)
+            if _COMPACT:
+                with st.expander("Варианты", expanded=False):
+                    for L in letters:
+                        st.markdown(f"**{L})**")
+                        render_rich_text_indented(opts.get(L, ""), images_map)
+            else:
+                for L in letters:
+                    st.markdown(f"**{L})**")
+                    render_rich_text_indented(opts.get(L, ""), images_map)
         else:
             st.caption("Варианты скрыты для ускорения. Включите «Показывать варианты» при необходимости.")
 
@@ -1862,21 +1974,37 @@ if st.session_state.mode == "Разметка ответов":
 
         next_unmarked = find_next_unmarked(idx)
 
-        nav1, nav2, nav3, nav4 = st.columns([1, 1.8, 1, 5])
-        with nav1:
-            if st.button("⬅️ Назад", disabled=(idx <= 0)):
-                set_mark_index(idx - 1)
-                safe_rerun()
-        with nav2:
-            if st.button("⏭️ Следующий неразмеченный", disabled=(next_unmarked is None)):
+        if _COMPACT:
+            n1, n2, n3 = st.columns([1, 1, 3])
+            with n1:
+                if st.button("⬅️", disabled=(idx <= 0), key=f"m_prev_{idx}"):
+                    set_mark_index(idx - 1)
+                    safe_rerun()
+            with n2:
+                if st.button("➡️", disabled=(idx >= total - 1), key=f"m_next_{idx}"):
+                    set_mark_index(idx + 1)
+                    safe_rerun()
+            with n3:
+                st.caption(f"Вопрос {idx+1}/{total}")
+            if st.button("⏭️ Следующий неразмеченный", disabled=(next_unmarked is None), key=f"m_next_unmarked_{idx}"):
                 set_mark_index(int(next_unmarked))
                 safe_rerun()
-        with nav3:
-            if st.button("Вперёд ➡️", disabled=(idx >= total - 1)):
-                set_mark_index(idx + 1)
-                safe_rerun()
-        with nav4:
-            st.write(f"Вопрос **{idx+1}** из **{total}**")
+        else:
+            nav1, nav2, nav3, nav4 = st.columns([1, 1.8, 1, 5])
+            with nav1:
+                if st.button("⬅️ Назад", disabled=(idx <= 0)):
+                    set_mark_index(idx - 1)
+                    safe_rerun()
+            with nav2:
+                if st.button("⏭️ Следующий неразмеченный", disabled=(next_unmarked is None)):
+                    set_mark_index(int(next_unmarked))
+                    safe_rerun()
+            with nav3:
+                if st.button("Вперёд ➡️", disabled=(idx >= total - 1)):
+                    set_mark_index(idx + 1)
+                    safe_rerun()
+            with nav4:
+                st.write(f"Вопрос **{idx+1}** из **{total}**")
 
         st.divider()
         render_mark_item(idx, show_header=True)
@@ -1941,15 +2069,25 @@ if st.session_state.mode == "Разметка ответов":
 else:
     st.subheader("Тестирование")
 
-    c1, c2, c3 = st.columns([1, 1, 2])
-    with c1:
-        if st.button("Начать заново"):
-            reset_testing_state()
-            st.success("Тест начат заново.")
-    with c2:
-        if st.button("К результатам"):
-            finish_to_results(reason="manual")
-            safe_rerun()
+    if _COMPACT:
+        with st.sidebar:
+            with st.expander("🧭 Быстрые действия", expanded=False):
+                if st.button("🔄 Начать заново", key="t_restart"):
+                    reset_testing_state()
+                    st.success("Тест начат заново.")
+                if st.button("📊 К результатам", key="t_results"):
+                    finish_to_results(reason="manual")
+                    safe_rerun()
+    else:
+        c1, c2, c3 = st.columns([1, 1, 2])
+        with c1:
+            if st.button("Начать заново"):
+                reset_testing_state()
+                st.success("Тест начат заново.")
+        with c2:
+            if st.button("К результатам"):
+                finish_to_results(reason="manual")
+                safe_rerun()
 
     # База теста (все или только размеченные)
     base_indices = get_test_indices(data, bool(st.session_state.test_only_marked))
@@ -2105,24 +2243,35 @@ else:
     def go_next():
         st.session_state[pos_key] = min(len(order_indices) - 1, st.session_state[pos_key] + 1)
 
-    nav1, nav2, nav3, nav4 = st.columns([1, 1, 1, 2])
-    with nav1:
-        st.button("⬅️ Назад", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
-    with nav2:
-        st.button(
-            "Вперёд ➡️",
-            on_click=go_next,
-            disabled=(pos == len(order_indices) - 1),
-            key=f"next_{st.session_state.test_phase}",
-        )
-    with nav3:
-        # ✅ досрочное завершение — всегда доступно
-        finish_label = "Завершить работу" if is_review else "Завершить тест"
-        if st.button(f"{finish_label} сейчас", key=f"finish_any_{st.session_state.test_phase}"):
-            finish_to_results(reason="manual")
-            safe_rerun()
-    with nav4:
-        st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
+    if _COMPACT:
+        n1, n2, n3 = st.columns([1, 1, 1])
+        with n1:
+            st.button("⬅️", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
+        with n2:
+            st.button("➡️", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"next_{st.session_state.test_phase}")
+        with n3:
+            if st.button("⏹️", key=f"finish_any_{st.session_state.test_phase}"):
+                finish_to_results(reason="manual")
+                safe_rerun()
+        st.caption("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
+    else:
+        nav1, nav2, nav3, nav4 = st.columns([1, 1, 1, 2])
+        with nav1:
+            st.button("⬅️ Назад", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
+        with nav2:
+            st.button(
+                "Вперёд ➡️",
+                on_click=go_next,
+                disabled=(pos == len(order_indices) - 1),
+                key=f"next_{st.session_state.test_phase}",
+            )
+        with nav3:
+            finish_label = "Завершить работу" if is_review else "Завершить тест"
+            if st.button(f"{finish_label} сейчас", key=f"finish_any_{st.session_state.test_phase}"):
+                finish_to_results(reason="manual")
+                safe_rerun()
+        with nav4:
+            st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
 
     base_title = f"Вопрос {global_idx+1} из {len(data)}"
     if is_review:
@@ -2172,26 +2321,34 @@ else:
     display_by_orig = {orig: disp for (disp, orig) in view}
     orig_by_display = {disp: orig for (disp, orig) in view}
 
-    for disp, orig in view:
-        # Более устойчиво на телефоне: не индексируем columns (row[0]/row[1]),
-        # а распаковываем. Если columns по какой-то причине недоступны, делаем фоллбэк без колонок.
-        try:
-            col_btn, col_txt = st.columns([1, 25])
-        except Exception:
-            col_btn = st.container()
-            col_txt = st.container()
+    if _COMPACT:
+        cols = st.columns(2)
+        for i, (disp, orig) in enumerate(view):
+            with cols[i % 2]:
+                if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
+                    st.session_state.user_answers[global_idx] = orig
+                    selected = orig
+                if selected == orig:
+                    st.markdown("✅")
+                render_rich_text(opts[orig], images_map)
+                st.markdown("<div style='height:0.35rem'></div>", unsafe_allow_html=True)
+    else:
+        for disp, orig in view:
+            try:
+                col_btn, col_txt = st.columns([1, 25])
+            except Exception:
+                col_btn = st.container()
+                col_txt = st.container()
 
-        with col_btn:
-            if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
-                st.session_state.user_answers[global_idx] = orig
-                selected = orig
-            if selected == orig:
-                st.markdown("✅")
+            with col_btn:
+                if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
+                    st.session_state.user_answers[global_idx] = orig
+                    selected = orig
+                if selected == orig:
+                    st.markdown("✅")
 
-        with col_txt:
-            render_rich_text(opts[orig], images_map)
-        st.write("")
-
+            with col_txt:
+                render_rich_text(opts[orig], images_map)
     selected_disp = display_by_orig.get(selected, str(selected)) if selected is not None else None
     correct_disp = display_by_orig.get(correct, str(correct)) if correct is not None else None
 
@@ -2224,8 +2381,16 @@ else:
                 st.session_state[pos_key] = j
                 return
 
-    if st.button("Перейти к следующему неотвеченному", key=f"jump_{st.session_state.test_phase}"):
-        jump_next_unanswered()
-        safe_rerun()
+    if _COMPACT:
+        with st.sidebar:
+            with st.expander("🧭 Навигация по тесту", expanded=False):
+                if st.button("⏭️ Следующий неотвеченный", key=f"jump_{st.session_state.test_phase}"):
+                    jump_next_unanswered()
+                    safe_rerun()
+                st.caption("Подсказка: зелёный — верно, красный — неверно. Итог — после завершения.")
+    else:
+        if st.button("Перейти к следующему неотвеченному", key=f"jump_{st.session_state.test_phase}"):
+            jump_next_unanswered()
+            safe_rerun()
 
-    st.caption("Зелёный — верно, красный — неверно. Результат будет показан после завершения (вручную или по таймеру).")
+        st.caption("Зелёный — верно, красный — неверно. Результат будет показан после завершения (вручную или по таймеру).")
