@@ -2167,14 +2167,22 @@ display_by_orig = {orig: disp for (disp, orig) in view}
 orig_by_display = {disp: orig for (disp, orig) in view}
 
 for disp, orig in view:
-        row = st.columns([1, 25])
-        with row[0]:
+        # Более устойчиво на телефоне: не индексируем columns (row[0]/row[1]),
+        # а распаковываем. Если columns по какой-то причине недоступны, делаем фоллбэк без колонок.
+        try:
+            col_btn, col_txt = st.columns([1, 25])
+        except Exception:
+            col_btn = st.container()
+            col_txt = st.container()
+
+        with col_btn:
             if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
                 st.session_state.user_answers[global_idx] = orig
                 selected = orig
             if selected == orig:
                 st.markdown("✅")
-        with row[1]:
+
+        with col_txt:
             render_rich_text(opts[orig], images_map)
         st.write("")
 
