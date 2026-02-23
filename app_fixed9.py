@@ -55,6 +55,9 @@ if _COMPACT:
           .block-container {padding-top: 1.0rem; padding-bottom: 1.0rem;}
           /* делаем элементы чуть компактнее */
           [data-testid="stVerticalBlock"] {gap: 0.35rem;}
+          .qtitle {font-size: 0.95rem; font-weight: 600; margin: 0.25rem 0 0.25rem 0;}
+          .qtitle .muted {opacity: 0.85; font-weight: 500;}
+
           /* уменьшаем отступы внутри экспандеров */
           details > summary {padding: 0.2rem 0;}
         </style>
@@ -2123,13 +2126,18 @@ else:
     with nav4:
         st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
 
-    title = f"## Вопрос {global_idx+1} из {len(data)}"
-    if is_review:
-        title += f"  ·  Ошибка {pos+1} из {len(order_indices)}"
-    ticket = q.get("ticket")
-    if ticket:
-        title += f"  ·  {ticket}"
-    st.markdown(title)
+    # Заголовок вопроса (компактнее на телефоне)
+base_title = f"Вопрос {global_idx+1} из {len(data)}"
+if is_review:
+    base_title += f" · Ошибка {pos+1} из {len(order_indices)}"
+ticket = q.get("ticket")
+if ticket:
+    base_title += f" · {ticket}"
+
+if _COMPACT:
+    st.markdown(f"<div class='qtitle'>{base_title}</div>", unsafe_allow_html=True)
+else:
+    st.markdown("## " + base_title)
 
     render_rich_text(q.get("question", ""), images_map)
 
