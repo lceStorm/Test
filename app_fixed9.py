@@ -2142,32 +2142,32 @@ else:
 
     selected = st.session_state.user_answers.get(global_idx)
     st.markdown("### Варианты (нажмите на букву, чтобы выбрать)")
-view = prepare_option_view(global_idx, opts)
+    view = prepare_option_view(global_idx, opts)
 
-# Защита от некорректного формата view (иногда в окружениях/после правок может прийти не список пар).
-# Нормализуем к виду List[Tuple[display, original]].
-norm_view = []
-try:
-    for item in list(view):
-        if isinstance(item, (list, tuple)) and len(item) == 2:
-            disp, orig = item
-        elif isinstance(item, str):
-            disp = orig = item
-        else:
-            continue
-        norm_view.append((str(disp), str(orig)))
-except Exception:
+    # Защита от некорректного формата view (иногда в окружениях/после правок может прийти не список пар).
+    # Нормализуем к виду List[Tuple[display, original]].
     norm_view = []
+    try:
+        for item in list(view):
+            if isinstance(item, (list, tuple)) and len(item) == 2:
+                disp, orig = item
+            elif isinstance(item, str):
+                disp = orig = item
+            else:
+                continue
+            norm_view.append((str(disp), str(orig)))
+    except Exception:
+        norm_view = []
 
-if not norm_view:
-    # Фоллбэк: показываем как есть, без переназначения букв
-    norm_view = [(k, k) for k in prepare_option_order(global_idx, list(opts.keys()))]
+    if not norm_view:
+        # Фоллбэк: показываем как есть, без переназначения букв
+        norm_view = [(k, k) for k in prepare_option_order(global_idx, list(opts.keys()))]
 
-view = norm_view
-display_by_orig = {orig: disp for (disp, orig) in view}
-orig_by_display = {disp: orig for (disp, orig) in view}
+    view = norm_view
+    display_by_orig = {orig: disp for (disp, orig) in view}
+    orig_by_display = {disp: orig for (disp, orig) in view}
 
-for disp, orig in view:
+    for disp, orig in view:
         # Более устойчиво на телефоне: не индексируем columns (row[0]/row[1]),
         # а распаковываем. Если columns по какой-то причине недоступны, делаем фоллбэк без колонок.
         try:
