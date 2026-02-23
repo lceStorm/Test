@@ -1,1 +1,3 @@
 imagemagick
+libwmf-bin
+ghostscript

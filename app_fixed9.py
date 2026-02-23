@@ -189,8 +189,15 @@ def _sha1(data: bytes) -> str:
     return hashlib.sha1(data).hexdigest()
 
 
-def has_magick() -> bool:
-    return shutil.which("magick") is not None
+def has_imagemagick() -> bool:
+    """True if ImageMagick is available (v7: magick, v6: convert)."""
+    return (shutil.which("magick") is not None) or (shutil.which("convert") is not None)
+
+def imagemagick_cmd() -> list:
+    """Return command prefix for conversion."""
+    if shutil.which("magick") is not None:
+        return ["magick", "convert"]
+    return ["convert"]
 
 
 def get_image_size_px(image_bytes: bytes) -> Optional[Tuple[int, int]]:
@@ -214,8 +221,8 @@ def ensure_png_bytes(image_bytes: bytes, ext_hint: Optional[str] = None) -> Tupl
     if not needs_convert:
         return image_bytes, (ext_hint or "png"), True, ""
 
-    if not has_magick():
-        return image_bytes, (ext_hint or "wmf"), False, "Нет ImageMagick (magick) — WMF/EMF не конвертируется."
+    if not has_imagemagick():
+        return image_bytes, (ext_hint or "wmf"), False, "Нет ImageMagick (magick/convert) — WMF/EMF не конвертируется."
 
     with tempfile.TemporaryDirectory() as td:
         in_path = os.path.join(td, f"in.{ext_hint or 'wmf'}")
@@ -235,7 +242,7 @@ def ensure_png_bytes(image_bytes: bytes, ext_hint: Optional[str] = None) -> Tupl
                 except Exception:
                     pass
             subprocess.run(
-                ["magick", "convert", in_path, out_path],
+                imagemagick_cmd() + [in_path, out_path],
                 **run_kwargs,
             )
             with open(out_path, "rb") as f:
@@ -1374,10 +1381,6 @@ def load_persisted_key_into(data: List[dict], file_hash: str) -> int:
         return applied
     except Exception:
         return 0
-
-
-st.title("Тестирование из Word/TXT — корректные ответы + формулы/картинки")
-
 with st.sidebar:
     st.header("Сохранение")
     st.session_state.autosave_key = st.checkbox(
@@ -1615,7 +1618,7 @@ with st.sidebar:
             reset_timer(keep_settings=True)
             safe_rerun()
 
-if not has_magick():
+if not has_imagemagick():
     st.warning(
         "ImageMagick (magick) не найден. WMF/EMF формулы могут не отображаться как картинки, "
         "но структура вопросов/ответов будет правильной."
