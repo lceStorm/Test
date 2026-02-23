@@ -33,7 +33,7 @@ import streamlit as st
 from docx import Document
 from docx.oxml.ns import qn
 
-st.set_page_config(page_title="Тесты из DOCX/TXT (с картинками/формулами, initial_sidebar_state="collapsed")", layout="wide")
+st.set_page_config(page_title="Тесты из DOCX/TXT", layout="wide", initial_sidebar_state="collapsed")
 
 
 
