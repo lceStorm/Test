@@ -2125,16 +2125,16 @@ else:
         st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
 
     base_title = f"Вопрос {global_idx+1} из {len(data)}"
-if is_review:
-    base_title += f"  ·  Ошибка {pos+1} из {len(order_indices)}"
-ticket = q.get("ticket")
-if ticket:
-    base_title += f"  ·  {ticket}"
+    if is_review:
+        base_title += f"  ·  Ошибка {pos+1} из {len(order_indices)}"
+    ticket = q.get("ticket")
+    if ticket:
+        base_title += f"  ·  {ticket}"
 
-if _COMPACT:
-    st.markdown(f"<div class='qtitle'>{base_title}</div>", unsafe_allow_html=True)
-else:
-    st.markdown("## " + base_title)
+    if _COMPACT:
+        st.markdown(f"<div class='qtitle'>{base_title}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("## " + base_title)
 
     render_rich_text(q.get("question", ""), images_map)
 
