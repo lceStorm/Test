@@ -2262,6 +2262,9 @@ else:
             min-height: 2.6rem;
             font-size: 1.0rem !important;
             padding: 0.45rem 0.6rem !important;
+            text-align: left !important;
+            white-space: normal !important;
+            line-height: 1.25 !important;
           }
         </style>
         """,
@@ -2328,25 +2331,27 @@ else:
     
     # Варианты (всегда показываем)
     for disp, orig in view:
+        # Делаем кликабельным ВЕСЬ текст варианта (как большая кнопка-карточка)
+        # Внутри кнопки используем “плоский” текст (без картинок), зато зона нажатия — вся карточка.
+        opt_raw = str(opts.get(orig, ""))
+        opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
+        opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
+        label = f"{disp}) {opt_plain}" if opt_plain else f"{disp})"
+
         with st.container(border=True):
             st.markdown(f"<span class='optmarker' data-opt='{orig}'></span>", unsafe_allow_html=True)
-            col_btn, col_txt = st.columns([1.4, 18])
-            with col_btn:
-                if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
-                    st.session_state.user_answers[global_idx] = orig
-                    selected = orig
-                    safe_rerun()
-            with col_txt:
-                render_rich_text(opts[orig], images_map)
-    
+            if st.button(label, key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}", use_container_width=True):
+                st.session_state.user_answers[global_idx] = orig
+                selected = orig
+                safe_rerun()
     # Кнопки навигации снизу (как на фото)
-    nav1, nav2, nav3 = st.columns([1.4, 1.4, 7])
+    nav1, nav2, nav3 = st.columns([1.6, 6.8, 1.6])
     with nav1:
-        st.button("назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}")
+        st.button("назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
     with nav2:
-        st.button("далее", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}")
-    with nav3:
         st.caption(f"Вопрос {pos+1} из {len(order_indices)}")
+    with nav3:
+        st.button("далее", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
 
     def jump_next_unanswered():
         for j in range(pos + 1, len(order_indices)):
