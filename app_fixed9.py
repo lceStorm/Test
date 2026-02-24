@@ -655,15 +655,34 @@ def finish_to_results(reason: str = "manual"):
 # Test helpers
 # -----------------------------
 def reset_testing_state():
+    """Сбрасывает тест и ВСЕГДА запускает новую перемешку.
+
+    По требованию интерфейса:
+    - вопросы и варианты ответов перемешиваются автоматически при старте теста
+    - и при «Начать заново»
+    """
+    # Перемешивание всегда включено
+    st.session_state.shuffle_questions = True
+    st.session_state.shuffle_answers = True
+    st.session_state.shuffle_answers_start_only = True
+    st.session_state.shuffle_answers_relabel = True
+
+    # Новые seed'ы при каждом старте/сбросе теста
+    base = int(time.time() * 1000) & 0x7fffffff
+    st.session_state.shuffle_seed = base
+    st.session_state.shuffle_answers_seed = (base + 12345) & 0x7fffffff
+
     st.session_state.test_phase = "testing"  # testing | results | review
     st.session_state.test_index = 0
     st.session_state.review_pos = 0
     st.session_state.review_list = []
     st.session_state.user_answers = {}  # index -> letter
+
+    # Кэши перемешивания ответов и порядка вопросов сбрасываем
     st.session_state.answer_order_cache = {}
-    # порядок вопросов (для перемешивания) пересоздаём заново
     st.session_state.test_order_indices = []
     st.session_state.test_order_sig = None
+
     reset_timer(keep_settings=True)
 
 
@@ -858,9 +877,9 @@ defaults = {
     "test_only_marked": True,
     "test_limit_enabled": False,
     "test_limit_count": 50,
-    "shuffle_questions": False,
+    "shuffle_questions": True,
     "shuffle_seed": None,
-    "shuffle_answers": False,
+    "shuffle_answers": True,
     "shuffle_answers_seed": None,
     "shuffle_answers_start_only": True,
     "shuffle_answers_relabel": True,
@@ -1536,29 +1555,36 @@ with st.sidebar:
 
     st.divider()
     st.header("Тест")
-    # При изменении параметров теста сбрасываем прогресс (чтобы порядок/набор вопросов не ломал результаты)
+    # При изменении параметров теста сбрасываем прогресс
     _prev_only_marked = bool(st.session_state.test_only_marked)
-    _prev_shuffle = bool(st.session_state.shuffle_questions)
-    _prev_shuffle_answers = bool(st.session_state.shuffle_answers)
     _prev_limit_enabled = bool(st.session_state.get('test_limit_enabled'))
     _prev_limit_count = int(st.session_state.get('test_limit_count') or 0)
+    
     st.session_state.test_only_marked = st.checkbox(
         "Тестировать только размеченные вопросы",
         value=bool(st.session_state.test_only_marked),
         help="Если размечены не все вопросы, включите этот режим, чтобы тестировать только те, где задан правильный ответ.",
     )
-
-    st.session_state.shuffle_questions = st.checkbox(
-        "Перемешать вопросы",
-        value=bool(st.session_state.shuffle_questions),
-        help="Перемешивает порядок вопросов в режиме тестирования. Порядок фиксируется на весь тест.",
-    )
-
+    
+    # Перемешивание всегда включено: при старте и при «Начать заново»
+    st.session_state.shuffle_questions = True
+    st.session_state.shuffle_answers = True
+    st.session_state.shuffle_answers_start_only = True
+    st.session_state.shuffle_answers_relabel = True
+    
+    # Если seeds ещё не заданы (первый запуск сессии) — создадим один раз
+    if st.session_state.shuffle_seed is None or st.session_state.shuffle_answers_seed is None:
+        _base = int(time.time() * 1000) & 0x7fffffff
+        st.session_state.shuffle_seed = _base
+        st.session_state.shuffle_answers_seed = (_base + 12345) & 0x7fffffff
+    
+    st.caption("🔀 Вопросы и варианты ответов перемешиваются автоматически при старте теста и при «Начать заново».")
+    
     st.session_state.test_limit_enabled = st.checkbox(
         "Ограничить количество вопросов",
         value=bool(st.session_state.get("test_limit_enabled")),
         help="Позволяет провести тест по ограниченному количеству вопросов. "
-             "Будут взяты первые N вопросов из текущего порядка теста (после перемешивания, если оно включено).",
+             "Будут взяты первые N вопросов из текущего порядка теста (после перемешивания).",
     )
     st.session_state.test_limit_count = st.number_input(
         "Количество вопросов в тесте",
@@ -1568,71 +1594,11 @@ with st.sidebar:
         step=1,
         disabled=not bool(st.session_state.get("test_limit_enabled")),
     )
-
-    if st.session_state.shuffle_questions:
-        if st.session_state.shuffle_seed is None:
-            st.session_state.shuffle_seed = int(time.time() * 1000) & 0x7fffffff
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            if st.button("🔀 Новая перемешка"):
-                st.session_state.shuffle_seed = int(time.time() * 1000) & 0x7fffffff
-                st.session_state.answer_order_cache = {}
-                reset_testing_state()
-                safe_rerun()
-        with col_s2:
-            st.caption(f"Seed: {st.session_state.shuffle_seed}")
-    else:
-        st.session_state.shuffle_seed = None
-
-    st.session_state.shuffle_answers = st.checkbox(
-        "Перемешать варианты ответов",
-        value=bool(st.session_state.shuffle_answers),
-        help="Перемешивает порядок вариантов (A/Б/…) внутри каждого вопроса в режиме тестирования. Порядок фиксируется на весь тест.",
-    )
-    # Доп. опция: фиксировать порядок ответов только при старте теста
-    if st.session_state.shuffle_answers:
-        st.session_state.shuffle_answers_start_only = st.checkbox(
-            "Перемешивать ответы только при старте теста",
-            value=bool(st.session_state.shuffle_answers_start_only),
-            help="Если включено, порядок вариантов фиксируется при старте/сбросе теста и не меняется в процессе прохождения.",
-        )
-
-        st.session_state.shuffle_answers_relabel = st.checkbox(
-            "Перемешивать буквы вариантов вместе с ответами",
-            value=bool(st.session_state.get("shuffle_answers_relabel", True)),
-            help="Если включено, после перемешивания ответы перенумеровываются как A/B/C... (или А/Б/В...), чтобы не было 'перепутанных' букв.",
-        )
-    else:
-        # когда перемешивание ответов выключено — сбрасываем кэш
-        st.session_state.shuffle_answers_start_only = True
-        st.session_state.answer_order_cache = {}
-
-    if st.session_state.shuffle_answers:
-        if st.session_state.shuffle_answers_seed is None:
-            st.session_state.shuffle_answers_seed = int(time.time() * 1000) & 0x7fffffff
-        col_a1, col_a2 = st.columns(2)
-        with col_a1:
-            started_answers = (st.session_state.get("mode") == "Тестирование") and (
-                int(st.session_state.get("test_index") or 0) > 0 or len(st.session_state.get("user_answers") or {}) > 0
-            )
-            disable_shuffle_now = bool(st.session_state.get("shuffle_answers_start_only", True)) and started_answers
-            if st.button("🔀 Новая перемешка ответов", disabled=disable_shuffle_now):
-                st.session_state.shuffle_answers_seed = int(time.time() * 1000) & 0x7fffffff
-                st.session_state.answer_order_cache = {}
-                reset_testing_state()
-                safe_rerun()
-            if disable_shuffle_now:
-                st.caption("Перемешка вариантов фиксируется на старте теста. Чтобы изменить порядок — нажмите «Начать заново» (тест начнётся заново).")
-        with col_a2:
-            st.caption(f"Seed: {st.session_state.shuffle_answers_seed}")
-    else:
-        st.session_state.shuffle_answers_seed = None
-
-    # Если изменили параметры набора/порядка вопросов — сбросить тест
-    if (bool(st.session_state.test_only_marked) != _prev_only_marked) or (bool(st.session_state.shuffle_questions) != _prev_shuffle) or (bool(st.session_state.shuffle_answers) != _prev_shuffle_answers or bool(st.session_state.get('test_limit_enabled')) != _prev_limit_enabled or int(st.session_state.get('test_limit_count') or 0) != _prev_limit_count):
+    
+    # Если изменили набор/лимит вопросов — сбросить тест (и перемешать заново)
+    if (bool(st.session_state.test_only_marked) != _prev_only_marked) or (bool(st.session_state.get('test_limit_enabled')) != _prev_limit_enabled) or (int(st.session_state.get('test_limit_count') or 0) != _prev_limit_count):
         reset_testing_state()
         safe_rerun()
-
     st.session_state.timer_enabled = st.checkbox("Тестирование на время", value=bool(st.session_state.timer_enabled))
     st.session_state.timer_minutes = st.number_input(
         "Лимит времени (минут)",
@@ -1781,7 +1747,10 @@ if st.session_state.mode == "Разметка ответов":
                 st.selectbox("Отображение", view_modes, key="mark_view_mode")
 
 
-                st.checkbox("Показывать варианты", key="mark_show_variants")
+                # Варианты всегда показываем (переключатель убран)
+
+
+                st.session_state.mark_show_variants = True
 
                 if "mark_auto_advance" not in st.session_state:
 
@@ -1842,7 +1811,9 @@ if st.session_state.mode == "Разметка ответов":
 
         with c2:
 
-            st.checkbox("Показывать варианты", key="mark_show_variants")
+            # Варианты всегда показываем (переключатель убран)
+
+            st.session_state.mark_show_variants = True
 
             if "mark_auto_advance" not in st.session_state:
 
@@ -1955,18 +1926,10 @@ if st.session_state.mode == "Разметка ответов":
                 safe_rerun()
 
 
-        if st.session_state.get("mark_show_variants", True):
-            if _COMPACT:
-                with st.expander("Варианты", expanded=False):
-                    for L in letters:
-                        st.markdown(f"**{L})**")
-                        render_rich_text_indented(opts.get(L, ""), images_map)
-            else:
-                for L in letters:
-                    st.markdown(f"**{L})**")
-                    render_rich_text_indented(opts.get(L, ""), images_map)
-        else:
-            st.caption("Варианты скрыты для ускорения. Включите «Показывать варианты» при необходимости.")
+        # Варианты всегда показываем
+        for L in letters:
+            st.markdown(f"**{L})**")
+            render_rich_text_indented(opts.get(L, ""), images_map)
 
     # --- Основной вывод ---
     view = st.session_state.get("mark_view_mode", "По одному (быстро)")
@@ -2280,25 +2243,34 @@ else:
     selected = st.session_state.user_answers.get(global_idx)
 
     st.markdown("<div class='variants-title'>Варианты</div>", unsafe_allow_html=True)
-
-    # Навигация рядом с вариантами (удобнее на телефоне)
-    if _COMPACT:
-        navL, navR = st.columns([1, 1])
-        with navL:
-            st.button("⬅️", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
-        with navR:
-            st.button("➡️", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"next_{st.session_state.test_phase}")
-        st.caption("Нажмите на букву, чтобы выбрать ответ.")
-    else:
-        navL, navR = st.columns([1, 1])
-        with navL:
-            st.button("⬅️ Назад", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
-        with navR:
-            st.button("Вперёд ➡️", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"next_{st.session_state.test_phase}")
+    
+    # Базовые стили: делаем варианты похожими на “карточки” (как на скрине)
+    st.markdown(
+        """
+        <style>
+          span.optmarker{display:none;}
+    
+          /* стараемся попасть в разные версии Streamlit */
+          div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker),
+          div[data-testid="stContainer"]:has(span.optmarker){
+            border-radius: 12px !important;
+            padding: 0.25rem 0.35rem !important;
+          }
+          div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker) button,
+          div[data-testid="stContainer"]:has(span.optmarker) button{
+            width: 100% !important;
+            min-height: 2.6rem;
+            font-size: 1.0rem !important;
+            padding: 0.45rem 0.6rem !important;
+          }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    
     view = prepare_option_view(global_idx, opts)
-
-    # Защита от некорректного формата view (иногда в окружениях/после правок может прийти не список пар).
-    # Нормализуем к виду List[Tuple[display, original]].
+    
+    # Нормализуем view к виду List[Tuple[display, original]].
     norm_view = []
     try:
         for item in list(view):
@@ -2311,62 +2283,70 @@ else:
             norm_view.append((str(disp), str(orig)))
     except Exception:
         norm_view = []
-
+    
     if not norm_view:
         # Фоллбэк: показываем как есть, без переназначения букв
         norm_view = [(k, k) for k in prepare_option_order(global_idx, list(opts.keys()))]
-
+    
     view = norm_view
-    display_by_orig = {orig: disp for (disp, orig) in view}
-    orig_by_display = {disp: orig for (disp, orig) in view}
-
-    if _COMPACT:
-        cols = st.columns(2)
-        for i, (disp, orig) in enumerate(view):
-            with cols[i % 2]:
-                if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
-                    st.session_state.user_answers[global_idx] = orig
-                    selected = orig
-                if selected == orig:
-                    st.markdown("✅")
-                render_rich_text(opts[orig], images_map)
-                st.markdown("<div style='height:0.35rem'></div>", unsafe_allow_html=True)
-    else:
-        for disp, orig in view:
-            try:
-                col_btn, col_txt = st.columns([1, 25])
-            except Exception:
-                col_btn = st.container()
-                col_txt = st.container()
-
+    
+    # Подсветка после ответа: правильный — зелёный, выбранный неправильный — красный
+    if selected is not None:
+        _sel = str(selected)
+        _corr = str(correct)
+    
+        def _mk_rules(opt: str, kind: str) -> str:
+            # kind: correct|wrong
+            if kind == "correct":
+                bg = "rgba(31, 138, 59, 0.15)"
+                bd = "rgba(31, 138, 59, 0.55)"
+                btn = "#1f8a3b"
+            else:
+                bg = "rgba(194, 48, 58, 0.12)"
+                bd = "rgba(194, 48, 58, 0.55)"
+                btn = "#c2303a"
+    
+            # несколько селекторов на случай разных DOM-обёрток
+            base_sel = (
+                'div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker[data-opt="{opt}"]),'
+                'div[data-testid="stContainer"]:has(span.optmarker[data-opt="{opt}"])'
+            ).format(opt=opt)
+    
+            rules = []
+            rules.append(f"{base_sel}{{background:{bg} !important; border-color:{bd} !important;}}")
+            rules.append(f"{base_sel} button{{background:{btn} !important; color:#fff !important; border-color:{btn} !important;}}")
+            return "\n".join(rules)
+    
+        css = []
+        # правильный всегда подсвечиваем
+        css.append(_mk_rules(_corr, "correct"))
+        # если выбрали неправильно — выбранный красным
+        if _sel != _corr:
+            css.append(_mk_rules(_sel, "wrong"))
+    
+        st.markdown("<style>" + "\n".join(css) + "</style>", unsafe_allow_html=True)
+    
+    # Варианты (всегда показываем)
+    for disp, orig in view:
+        with st.container(border=True):
+            st.markdown(f"<span class='optmarker' data-opt='{orig}'></span>", unsafe_allow_html=True)
+            col_btn, col_txt = st.columns([1.4, 18])
             with col_btn:
                 if st.button(f"{disp})", key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}"):
                     st.session_state.user_answers[global_idx] = orig
                     selected = orig
-                if selected == orig:
-                    st.markdown("✅")
-
+                    safe_rerun()
             with col_txt:
                 render_rich_text(opts[orig], images_map)
-    selected_disp = display_by_orig.get(selected, str(selected)) if selected is not None else None
-    correct_disp = display_by_orig.get(correct, str(correct)) if correct is not None else None
-
-    if selected is not None:
-        if selected == correct:
-            st.markdown(
-                "<div style='padding:10px;border-radius:10px;background:#123b22;border:1px solid #1f8a3b;color:#ffffff;'>"
-                f"✅ Верно (ваш ответ: {selected_disp})</div>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                "<div style='padding:10px;border-radius:10px;background:#3b1212;border:1px solid #c2303a;color:#ffffff;'>"
-                f"❌ Неверно (ваш ответ: {selected_disp}). Правильный ответ: {correct_disp}</div>",
-                unsafe_allow_html=True,
-            )
-    else:
-        st.info("Вы ещё не ответили на этот вопрос.")
-
+    
+    # Кнопки навигации снизу (как на фото)
+    nav1, nav2, nav3 = st.columns([1.4, 1.4, 7])
+    with nav1:
+        st.button("назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}")
+    with nav2:
+        st.button("далее", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}")
+    with nav3:
+        st.caption(f"Вопрос {pos+1} из {len(order_indices)}")
 
     def jump_next_unanswered():
         for j in range(pos + 1, len(order_indices)):
