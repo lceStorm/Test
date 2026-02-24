@@ -108,7 +108,16 @@ if _COMPACT:
             border-radius: 9px !important;
           }
 
-          /* Крупные стрелки в разметке */
+          
+          /* НЕ складывать колонки на телефоне (иначе стрелки/навигация съезжают) */
+          div[data-testid="stHorizontalBlock"]{
+            flex-wrap: nowrap !important;
+          }
+          div[data-testid="column"]{
+            min-width: 0 !important;
+            flex: 1 1 0% !important;
+          }
+/* Крупные стрелки в разметке */
           .big-arrows .stButton>button{
             font-size: 2.00rem !important;
             min-height: 3.10rem !important;
@@ -2022,8 +2031,7 @@ if st.session_state.mode == "Разметка ответов":
             opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
             opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
 
-            prefix = "[x] " if selected_ans == L else "[ ] "
-            label = f"{prefix}{L}) {opt_plain}" if opt_plain else f"{prefix}{L})"
+            label = f"{L}) {opt_plain}" if opt_plain else f"{L})"
 
             st.button(
                 label,
@@ -2413,7 +2421,7 @@ else:
             opt_raw = str(opts.get(orig, ""))
             opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
             opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
-            label = f"[ ] {disp}) {opt_plain}" if opt_plain else f"[ ] {disp})"
+            label = f"{disp}) {opt_plain}" if opt_plain else f"{disp})"
             st.button(
                 label,
                 key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}",
@@ -2438,11 +2446,9 @@ else:
             if sel != corr and str(orig) == sel:
                 bg = "rgba(194, 48, 58, 0.18)"
                 bd = "rgba(194, 48, 58, 0.55)"
-            prefix = "[x] " if str(orig) == sel else "[ ] "
-
             card = f"""
 <div class='opt-card' style='border:1px solid {bd}; background:{bg};'>
-  <span style='font-weight:600; flex:0 0 auto;'>{prefix}{disp})</span><span style='flex:1; min-width:0;'>{opt_plain}</span>
+  <span style='font-weight:600; flex:0 0 auto;'>{disp})</span><span style='flex:1; min-width:0;'>{opt_plain}</span>
 </div>
 """
             st.markdown(card, unsafe_allow_html=True)
