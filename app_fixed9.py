@@ -55,7 +55,7 @@ if _COMPACT:
           * { box-sizing: border-box; }
 
           /* уменьшаем верхний отступ и общий вертикальный “воздух” */
-          .block-container {padding-top: 0.75rem; padding-bottom: 8.2rem; padding-left:0.55rem; padding-right:0.55rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
+          .block-container {padding-top: calc(3.2rem + env(safe-area-inset-top)); padding-bottom: 8.2rem; padding-left:0.55rem; padding-right:0.55rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
           /* делаем элементы чуть компактнее */
           [data-testid="stVerticalBlock"] {gap: 0.16rem;}
           /* уменьшаем отступы внутри экспандеров */
@@ -67,6 +67,21 @@ if _COMPACT:
           /* кнопки компактнее */
           .stButton>button {padding: 0.16rem 0.32rem; font-size: 0.78rem; width: 100%; min-width:0 !important; min-height: 1.75rem; white-space: normal !important; border-width:1px !important; box-shadow:none !important; outline:none !important; transition:none !important;}
           .stButton>button:active, .stButton>button:focus {box-shadow:none !important; outline:none !important; transform:none !important;}
+
+          /* крупнее “иконные” навигационные кнопки (используем type="primary" только для стрелок) */
+          div[data-testid="stButton"] > button[data-testid^="baseButton-primary"]{
+            font-size: 1.05rem !important;
+            min-height: 2.25rem !important;
+            padding: 0.25rem 0.45rem !important;
+            background: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            box-shadow:none !important;
+          }
+          div[data-testid="stButton"] > button[data-testid^="baseButton-primary"]:active,
+          div[data-testid="stButton"] > button[data-testid^="baseButton-primary"]:focus{
+            box-shadow:none !important;
+            outline:none !important;
+          }
           /* чуть меньше вертикальные отступы у заголовков */
           h1, h2, h3 {margin-bottom: 0.3rem;}
 
@@ -74,10 +89,7 @@ if _COMPACT:
           div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important; gap: 0.35rem !important;}
 div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
 div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important; flex: 1 1 0% !important;}
-
-
-          /* прячем верхнюю панель Streamlit, чтобы первый виджет (Browse files) не “залезал” под неё */
-          div[data-testid="stToolbar"], header[data-testid="stHeader"], div[data-testid="stHeader"], div[data-testid="stDecoration"] {display:none !important;}
+          /* верхнюю панель НЕ прячем — нужен доступ к боковой панели */
           #MainMenu, footer {display:none !important;}
 
 </style>
@@ -1713,17 +1725,18 @@ if data is None:
 if st.session_state.loaded_file_name:
     st.caption(f"Файл: {st.session_state.loaded_file_name} · Вопросов: {len(data)}")
 
-# Режим: на телефоне — в боковой панели, на ПК — горизонтально сверху
+# Режим: переключатель всегда над заголовком режима (и на телефоне, и на ПК)
+_cur_mode = st.session_state.get("mode") or "Разметка ответов"
 if _COMPACT:
-    with st.sidebar:
-        st.markdown("### Режим")
-        _cur_mode = st.session_state.get("mode") or "Разметка ответов"
-        st.session_state.mode = st.radio(
-            "Режим",
-            ["Разметка ответов", "Тестирование"],
-            index=0 if _cur_mode == "Разметка ответов" else 1,
-            label_visibility="collapsed",
-        )
+    _ui_mode = st.radio(
+        "",
+        ["Разметка", "Тестирование"],
+        horizontal=True,
+        index=0 if _cur_mode == "Разметка ответов" else 1,
+        key="mode_top",
+        label_visibility="collapsed",
+    )
+    st.session_state.mode = "Разметка ответов" if _ui_mode == "Разметка" else "Тестирование"
 else:
     st.session_state.mode = st.radio("Режим", ["Разметка ответов", "Тестирование"], horizontal=True)
 
@@ -1974,13 +1987,13 @@ if st.session_state.mode == "Разметка ответов":
         next_unmarked = find_next_unmarked(idx)
 
         if _COMPACT:
-            n1, n2, n3 = st.columns([1, 1, 3])
+            n1, n2, n3 = st.columns([1.15, 1.15, 2.7])
             with n1:
-                if st.button("⬅️", disabled=(idx <= 0), key=f"m_prev_{idx}"):
+                if st.button("⬅️", disabled=(idx <= 0), key=f"m_prev_{idx}", type="primary"):
                     set_mark_index(idx - 1)
                     safe_rerun()
             with n2:
-                if st.button("➡️", disabled=(idx >= total - 1), key=f"m_next_{idx}"):
+                if st.button("➡️", disabled=(idx >= total - 1), key=f"m_next_{idx}", type="primary"):
                     set_mark_index(idx + 1)
                     safe_rerun()
             with n3:
