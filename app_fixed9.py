@@ -52,7 +52,7 @@ if _COMPACT:
         """
         <style>
           /* уменьшаем верхний отступ и общий вертикальный “воздух” */
-          .block-container {padding-top: 1.0rem; padding-bottom: 7.0rem;}
+          .block-container {padding-top: 1.0rem; padding-bottom: 12rem; overflow-x: hidden;}
           /* делаем элементы чуть компактнее */
           [data-testid="stVerticalBlock"] {gap: 0.35rem;}
           /* уменьшаем отступы внутри экспандеров */
@@ -68,6 +68,7 @@ if _COMPACT:
 
           /* на телефоне не даём колонкам переноситься (нужны кнопки навигации в 1 ряд) */
           div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important;}
+          div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important;}
 
 </style>
         """,
@@ -1908,31 +1909,34 @@ if st.session_state.mode == "Разметка ответов":
                     # Срабатывает в начале следующего рерана
                     st.session_state["_mark_pending_go"] = int(nxt)
 
-        st.radio(
-            "Правильный ответ:",
-            letters,
-            index=letters.index(current),
-            key=f"mark_choice_{i}",
-            horizontal=True,
-            on_change=_commit,
-        )
-        if q.get("answer") is None:
-            if st.button("✅ Подтвердить текущий ответ", key=f"mark_confirm_{i}"):
-                st.session_state.data[i]["answer"] = st.session_state.get(f"mark_choice_{i}", current)
-                # Автосохранение разметки при подтверждении
-                if bool(st.session_state.autosave_key):
-                    save_persisted_key()
-                if bool(st.session_state.get("mark_auto_advance")) and st.session_state.get("mark_view_mode") == "По одному (быстро)":
-                    nxt = find_next_unmarked(i)
-                    if nxt is not None and nxt != i:
-                        set_mark_index(int(nxt))
-                safe_rerun()
+                # Выбор правильного ответа: большие карточки-кнопки (кликается по всему тексту)
+        # В режиме разметки НЕ показываем зелёный/красный — только отмечаем выбранный вариант значком ✅
+        selected_ans = q.get("answer") if q.get("answer") in letters else None
 
+        def _commit_letter(letter: str):
+            st.session_state.data[i]["answer"] = letter
+            # Автосохранение разметки
+            if bool(st.session_state.autosave_key):
+                save_persisted_key()
 
-        # Варианты всегда показываем
+            # Автопереход: после выбора прыгаем на следующий неразмеченный (только в режиме "По одному")
+            if bool(st.session_state.get("mark_auto_advance")) and st.session_state.get("mark_view_mode") == "По одному (быстро)":
+                nxt = find_next_unmarked(i)
+                if nxt is not None and nxt != i:
+                    # Срабатывает в начале следующего рерана
+                    st.session_state["_mark_pending_go"] = int(nxt)
+
         for L in letters:
-            st.markdown(f"**{L})**")
-            render_rich_text_indented(opts.get(L, ""), images_map)
+            opt_raw = str(opts.get(L, ""))
+            opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
+            opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
+
+            prefix = "✅ " if selected_ans == L else ""
+            label = f"{prefix}{L}) {opt_plain}" if opt_plain else f"{prefix}{L})"
+
+            if st.button(label, key=f"mark_pick_{i}_{L}", use_container_width=True):
+                _commit_letter(L)
+                safe_rerun()
 
     # --- Основной вывод ---
     view = st.session_state.get("mark_view_mode", "По одному (быстро)")
@@ -2336,7 +2340,7 @@ else:
 """
             st.markdown(card, unsafe_allow_html=True)
     # Кнопки навигации снизу (в 1 строку на телефоне)
-    nL, nC, nR = st.columns([1.15, 1.7, 1.15])
+    nL, nC, nR = st.columns([1.0, 1.2, 1.0])
     with nL:
         st.button("назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
     with nC:
@@ -2345,7 +2349,7 @@ else:
         st.button("далее", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
 
     # Запас снизу, чтобы панель Streamlit Cloud «Управление приложением» не перекрывала кнопку «далее»
-    st.markdown("<div style='height:120px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:220px'></div>", unsafe_allow_html=True)
 
     def jump_next_unanswered():
 
