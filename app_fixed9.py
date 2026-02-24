@@ -2293,67 +2293,56 @@ else:
     
     view = norm_view
     
-    # Подсветка после ответа: правильный — зелёный, выбранный неправильный — красный
-    if selected is not None:
-        _sel = str(selected)
-        _corr = str(correct)
-    
-        def _mk_rules(opt: str, kind: str) -> str:
-            # kind: correct|wrong
-            if kind == "correct":
-                bg = "rgba(31, 138, 59, 0.15)"
-                bd = "rgba(31, 138, 59, 0.55)"
-                btn = "#1f8a3b"
-            else:
-                bg = "rgba(194, 48, 58, 0.12)"
-                bd = "rgba(194, 48, 58, 0.55)"
-                btn = "#c2303a"
-    
-            # несколько селекторов на случай разных DOM-обёрток
-            base_sel = (
-                'div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker[data-opt="{opt}"]),'
-                'div[data-testid="stContainer"]:has(span.optmarker[data-opt="{opt}"])'
-            ).format(opt=opt)
-    
-            rules = []
-            rules.append(f"{base_sel}{{background:{bg} !important; border-color:{bd} !important;}}")
-            rules.append(f"{base_sel} button{{background:{btn} !important; color:#fff !important; border-color:{btn} !important;}}")
-            return "\n".join(rules)
-    
-        css = []
-        # правильный всегда подсвечиваем
-        css.append(_mk_rules(_corr, "correct"))
-        # если выбрали неправильно — выбранный красным
-        if _sel != _corr:
-            css.append(_mk_rules(_sel, "wrong"))
-    
-        st.markdown("<style>" + "\n".join(css) + "</style>", unsafe_allow_html=True)
-    
     # Варианты (всегда показываем)
-    for disp, orig in view:
-        # Делаем кликабельным ВЕСЬ текст варианта (как большая кнопка-карточка)
-        # Внутри кнопки используем “плоский” текст (без картинок), зато зона нажатия — вся карточка.
-        opt_raw = str(opts.get(orig, ""))
-        opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
-        opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
-        label = f"{disp}) {opt_plain}" if opt_plain else f"{disp})"
-
-        with st.container(border=True):
-            st.markdown(f"<span class='optmarker' data-opt='{orig}'></span>", unsafe_allow_html=True)
+    # Поведение:
+    # - пока ответ не выбран: каждый вариант — большая кнопка на всю ширину (кликается по всему тексту)
+    # - после выбора: показываем варианты как цветные карточки (зелёный = правильный, красный = выбранный неверный)
+    if selected is None:
+        for disp, orig in view:
+            opt_raw = str(opts.get(orig, ""))
+            opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
+            opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
+            label = f"{disp}) {opt_plain}" if opt_plain else f"{disp})"
             if st.button(label, key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}", use_container_width=True):
                 st.session_state.user_answers[global_idx] = orig
                 selected = orig
                 safe_rerun()
+    else:
+        sel = str(selected)
+        corr = str(correct)
+        for disp, orig in view:
+            opt_raw = str(opts.get(orig, ""))
+            # показываем как текст (без HTML), зато красиво и предсказуемо на телефоне
+            opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
+            opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
+            # цвета
+            bg = "transparent"
+            bd = "rgba(100, 100, 100, 0.35)"
+            if str(orig) == corr:
+                bg = "rgba(38, 166, 91, 0.20)"
+                bd = "rgba(38, 166, 91, 0.55)"
+            if sel != corr and str(orig) == sel:
+                bg = "rgba(194, 48, 58, 0.18)"
+                bd = "rgba(194, 48, 58, 0.55)"
+
+            card = f"""
+<div style='border:1px solid {bd}; background:{bg}; padding:14px 14px; border-radius:14px; margin:10px 0; font-size:1.05rem; line-height:1.25;'>
+  <div style='font-weight:600; margin-bottom:6px;'>{disp})</div>
+  <div>{opt_plain}</div>
+</div>
+"""
+            st.markdown(card, unsafe_allow_html=True)
+
     # Кнопки навигации снизу (как на фото)
-    nav1, nav2, nav3 = st.columns([1.6, 6.8, 1.6])
-    with nav1:
+    cL, cR = st.columns([1, 1])
+    with cL:
         st.button("назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
-    with nav2:
-        st.caption(f"Вопрос {pos+1} из {len(order_indices)}")
-    with nav3:
+    with cR:
         st.button("далее", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
+    st.markdown(f"<div style='text-align:right; opacity:0.75; font-size:0.95rem; margin-top:6px;'>Вопрос {pos+1} из {len(order_indices)}</div>", unsafe_allow_html=True)
 
     def jump_next_unanswered():
+
         for j in range(pos + 1, len(order_indices)):
             gi = order_indices[j]
             if st.session_state.user_answers.get(gi) is None:
