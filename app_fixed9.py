@@ -52,7 +52,7 @@ if _COMPACT:
         """
         <style>
           /* уменьшаем верхний отступ и общий вертикальный “воздух” */
-          .block-container {padding-top: 1.0rem; padding-bottom: 1.0rem;}
+          .block-container {padding-top: 1.0rem; padding-bottom: 7.0rem;}
           /* делаем элементы чуть компактнее */
           [data-testid="stVerticalBlock"] {gap: 0.35rem;}
           /* уменьшаем отступы внутри экспандеров */
@@ -65,6 +65,9 @@ if _COMPACT:
           .stButton>button {padding: 0.45rem 0.70rem; font-size: 1.05rem; width: 100%;}
           /* чуть меньше вертикальные отступы у заголовков */
           h1, h2, h3 {margin-bottom: 0.3rem;}
+
+          /* на телефоне не даём колонкам переноситься (нужны кнопки навигации в 1 ряд) */
+          div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important;}
 
 </style>
         """,
@@ -2332,14 +2335,17 @@ else:
 </div>
 """
             st.markdown(card, unsafe_allow_html=True)
-
-    # Кнопки навигации снизу (как на фото)
-    cL, cR = st.columns([1, 1])
-    with cL:
+    # Кнопки навигации снизу (в 1 строку на телефоне)
+    nL, nC, nR = st.columns([1.15, 1.7, 1.15])
+    with nL:
         st.button("назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
-    with cR:
+    with nC:
+        st.markdown(f"<div style='text-align:center; opacity:0.75; font-size:0.98rem; padding-top:0.55rem;'>Вопрос {pos+1} из {len(order_indices)}</div>", unsafe_allow_html=True)
+    with nR:
         st.button("далее", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
-    st.markdown(f"<div style='text-align:right; opacity:0.75; font-size:0.95rem; margin-top:6px;'>Вопрос {pos+1} из {len(order_indices)}</div>", unsafe_allow_html=True)
+
+    # Запас снизу, чтобы панель Streamlit Cloud «Управление приложением» не перекрывала кнопку «далее»
+    st.markdown("<div style='height:120px'></div>", unsafe_allow_html=True)
 
     def jump_next_unanswered():
 
