@@ -52,7 +52,7 @@ if _COMPACT:
         """
         <style>
           /* уменьшаем верхний отступ и общий вертикальный “воздух” */
-          .block-container {padding-top: 1.0rem; padding-bottom: 12rem; overflow-x: hidden;}
+          .block-container {padding-top: 1.0rem; padding-bottom: 12rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
           /* делаем элементы чуть компактнее */
           [data-testid="stVerticalBlock"] {gap: 0.35rem;}
           /* уменьшаем отступы внутри экспандеров */
@@ -2339,17 +2339,24 @@ else:
 </div>
 """
             st.markdown(card, unsafe_allow_html=True)
+
+    # Прогресс (в отдельной строке — так кнопки «Назад/Далее» всегда остаются рядом и не «съезжают» на телефоне)
+    st.markdown(
+        f"<div style='text-align:center; opacity:0.75; font-size:0.98rem; margin-top:0.35rem; margin-bottom:0.20rem;'>"
+        f"Вопрос {pos+1} из {len(order_indices)}</div>",
+        unsafe_allow_html=True,
+    )
+
     # Кнопки навигации снизу (в 1 строку на телефоне)
-    nL, nC, nR = st.columns([1.0, 1.2, 1.0])
+    nL, nR = st.columns([1.0, 1.0])
     with nL:
-        st.button("назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
-    with nC:
-        st.markdown(f"<div style='text-align:center; opacity:0.75; font-size:0.98rem; padding-top:0.55rem;'>Вопрос {pos+1} из {len(order_indices)}</div>", unsafe_allow_html=True)
+        st.button("⬅️ назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
     with nR:
-        st.button("далее", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
+        st.button("далее ➡️", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
 
     # Запас снизу, чтобы панель Streamlit Cloud «Управление приложением» не перекрывала кнопку «далее»
     st.markdown("<div style='height:220px'></div>", unsafe_allow_html=True)
+
 
     def jump_next_unanswered():
 
