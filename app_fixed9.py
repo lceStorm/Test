@@ -51,28 +51,29 @@ if _COMPACT:
     st.markdown(
         """
         <style>
-          html, body {font-size: 12px;}
+          html, body {font-size: 11px;}
           * { box-sizing: border-box; }
 
           /* уменьшаем верхний отступ и общий вертикальный “воздух” */
-          .block-container {padding-top: 0.40rem; padding-bottom: 8.2rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
+          .block-container {padding-top: 0.35rem; padding-bottom: 8.2rem; padding-left:0.55rem; padding-right:0.55rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
           /* делаем элементы чуть компактнее */
           [data-testid="stVerticalBlock"] {gap: 0.16rem;}
           /* уменьшаем отступы внутри экспандеров */
           details > summary {padding: 0.2rem 0;}
-                  .qtitle{font-size:0.90rem;font-weight:600;line-height:1.2;margin:0.15rem 0 0.45rem 0;}
-          .variants-title{font-size:0.86rem;font-weight:700;line-height:1.15;margin:0.45rem 0 0.10rem 0;}
+                  .qtitle{font-size:0.86rem;font-weight:600;line-height:1.2;margin:0.15rem 0 0.45rem 0;}
+          .variants-title{font-size:0.82rem;font-weight:700;line-height:1.15;margin:0.45rem 0 0.10rem 0;}
 
         
           /* кнопки компактнее */
-          .stButton>button {padding: 0.18rem 0.40rem; font-size: 0.83rem; width: 100%; border-width:1px !important; box-shadow:none !important; outline:none !important; transition:none !important;}
+          .stButton>button {padding: 0.12rem 0.28rem; font-size: 0.78rem; width: 100%; min-width:0 !important; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; border-width:1px !important; box-shadow:none !important; outline:none !important; transition:none !important;}
           .stButton>button:active, .stButton>button:focus {box-shadow:none !important; outline:none !important; transform:none !important;}
           /* чуть меньше вертикальные отступы у заголовков */
           h1, h2, h3 {margin-bottom: 0.3rem;}
 
           /* на телефоне не даём колонкам переноситься (нужны кнопки навигации в 1 ряд) */
-          div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important;}
-          div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important;}
+          div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important; gap: 0.35rem !important;}
+div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important; flex: 1 1 0% !important;}
 
 </style>
         """,
@@ -2291,9 +2292,9 @@ else:
           div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker) button,
           div[data-testid="stContainer"]:has(span.optmarker) button{
             width: 100% !important;
-            min-height: 1.75rem;
-            font-size: 0.82rem !important;
-            padding: 0.18rem 0.32rem !important;
+            min-height: 1.60rem;
+            font-size: 0.78rem !important;
+            padding: 0.12rem 0.26rem !important;
             border-width:1px !important; box-shadow:none !important; outline:none !important; transition:none !important;
             text-align: left !important;
             white-space: normal !important;
@@ -2356,7 +2357,7 @@ else:
                 bd = "rgba(194, 48, 58, 0.55)"
 
             card = f"""
-<div style='border:1px solid {bd}; background:{bg}; padding:0.34rem 0.50rem; border-radius:10px; margin:0.22rem 0; font-size:0.83rem; line-height:1.2;'>
+<div style='border:1px solid {bd}; background:{bg}; padding:0.26rem 0.36rem; border-radius:9px; margin:0.18rem 0; font-size:0.78rem; line-height:1.2;'>
   <span style='font-weight:600; margin-right:0.35rem;'>{disp})</span><span>{opt_plain}</span>
 </div>
 """
@@ -2372,9 +2373,9 @@ else:
     # Кнопки навигации снизу (в 1 строку на телефоне)
     nL, nR = st.columns([1.0, 1.0])
     with nL:
-        st.button("⬅️ назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
+        st.button("← назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
     with nR:
-        st.button("далее ➡️", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
+        st.button("далее →", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
 
     # Запас снизу, чтобы панель Streamlit Cloud «Управление приложением» не перекрывала кнопку «далее»
     st.markdown("<div style='height:220px'></div>", unsafe_allow_html=True)
