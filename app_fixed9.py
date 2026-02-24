@@ -58,9 +58,11 @@ if _COMPACT:
           /* уменьшаем отступы внутри экспандеров */
           details > summary {padding: 0.2rem 0;}
                   .qtitle{font-size:0.95rem;font-weight:600;line-height:1.2;margin:0.2rem 0 0.6rem 0;}
+          .variants-title{font-size:1.15rem;font-weight:700;line-height:1.15;margin:0.55rem 0 0.15rem 0;}
+
         
           /* кнопки компактнее */
-          .stButton>button {padding: 0.25rem 0.5rem; font-size: 0.90rem;}
+          .stButton>button {padding: 0.45rem 0.70rem; font-size: 1.05rem; width: 100%;}
           /* чуть меньше вертикальные отступы у заголовков */
           h1, h2, h3 {margin-bottom: 0.3rem;}
 
@@ -2243,35 +2245,16 @@ else:
     def go_next():
         st.session_state[pos_key] = min(len(order_indices) - 1, st.session_state[pos_key] + 1)
 
-    if _COMPACT:
-        n1, n2, n3 = st.columns([1, 1, 1])
-        with n1:
-            st.button("⬅️", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
-        with n2:
-            st.button("➡️", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"next_{st.session_state.test_phase}")
-        with n3:
-            if st.button("⏹️", key=f"finish_any_{st.session_state.test_phase}"):
-                finish_to_results(reason="manual")
-                safe_rerun()
-        st.caption("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
-    else:
-        nav1, nav2, nav3, nav4 = st.columns([1, 1, 1, 2])
-        with nav1:
-            st.button("⬅️ Назад", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
-        with nav2:
-            st.button(
-                "Вперёд ➡️",
-                on_click=go_next,
-                disabled=(pos == len(order_indices) - 1),
-                key=f"next_{st.session_state.test_phase}",
-            )
-        with nav3:
+
+    # Завершение — в боковой панели (удобно на телефоне)
+    with st.sidebar:
+        with st.expander("⏹️ Завершение", expanded=False):
             finish_label = "Завершить работу" if is_review else "Завершить тест"
-            if st.button(f"{finish_label} сейчас", key=f"finish_any_{st.session_state.test_phase}"):
+            if st.button(finish_label, key=f"finish_sidebar_{st.session_state.test_phase}"):
                 finish_to_results(reason="manual")
                 safe_rerun()
-        with nav4:
-            st.info("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
+            st.caption("Можно завершить в любой момент — неотвеченные будут считаться неверными.")
+
 
     base_title = f"Вопрос {global_idx+1} из {len(data)}"
     if is_review:
@@ -2295,7 +2278,23 @@ else:
         st.stop()
 
     selected = st.session_state.user_answers.get(global_idx)
-    st.markdown("### Варианты (нажмите на букву, чтобы выбрать)")
+
+    st.markdown("<div class='variants-title'>Варианты</div>", unsafe_allow_html=True)
+
+    # Навигация рядом с вариантами (удобнее на телефоне)
+    if _COMPACT:
+        navL, navR = st.columns([1, 1])
+        with navL:
+            st.button("⬅️", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
+        with navR:
+            st.button("➡️", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"next_{st.session_state.test_phase}")
+        st.caption("Нажмите на букву, чтобы выбрать ответ.")
+    else:
+        navL, navR = st.columns([1, 1])
+        with navL:
+            st.button("⬅️ Назад", on_click=go_prev, disabled=(pos == 0), key=f"prev_{st.session_state.test_phase}")
+        with navR:
+            st.button("Вперёд ➡️", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"next_{st.session_state.test_phase}")
     view = prepare_option_view(global_idx, opts)
 
     # Защита от некорректного формата view (иногда в окружениях/после правок может прийти не список пар).
