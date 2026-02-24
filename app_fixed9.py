@@ -54,44 +54,79 @@ if _COMPACT:
           html, body {font-size: 11px;}
           * { box-sizing: border-box; }
 
-          /* уменьшаем верхний отступ и общий вертикальный “воздух” */
-          .block-container {padding-top: calc(3.2rem + env(safe-area-inset-top)); padding-bottom: 8.2rem; padding-left:0.55rem; padding-right:0.55rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
-          /* делаем элементы чуть компактнее */
+          /* больше места сверху, чтобы uploader не прятался под верхней панелью Streamlit */
+          .block-container {
+            padding-top: calc(3.4rem + env(safe-area-inset-top));
+            padding-bottom: 8.2rem;
+            padding-left:0.55rem;
+            padding-right:0.55rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+
           [data-testid="stVerticalBlock"] {gap: 0.16rem;}
-          /* уменьшаем отступы внутри экспандеров */
           details > summary {padding: 0.2rem 0;}
-                  .qtitle{font-size:0.86rem;font-weight:600;line-height:1.2;margin:0.15rem 0 0.45rem 0;}
-          .variants-title{font-size:0.82rem;font-weight:700;line-height:1.15;margin:0.45rem 0 0.10rem 0;}
 
-        
-          /* кнопки компактнее */
-          .stButton>button {padding: 0.16rem 0.32rem; font-size: 0.78rem; width: 100%; min-width:0 !important; min-height: 1.75rem; white-space: normal !important; border-width:1px !important; box-shadow:none !important; outline:none !important; transition:none !important;}
-          .stButton>button:active, .stButton>button:focus {box-shadow:none !important; outline:none !important; transform:none !important;}
-
-          /* крупнее “иконные” навигационные кнопки (используем type="primary" только для стрелок) */
-          div[data-testid="stButton"] > button[data-testid^="baseButton-primary"]{
-            font-size: 1.05rem !important;
-            min-height: 2.25rem !important;
-            padding: 0.25rem 0.45rem !important;
-            background: rgba(255,255,255,0.06) !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
-            box-shadow:none !important;
-          }
-          div[data-testid="stButton"] > button[data-testid^="baseButton-primary"]:active,
-          div[data-testid="stButton"] > button[data-testid^="baseButton-primary"]:focus{
-            box-shadow:none !important;
-            outline:none !important;
-          }
-          /* чуть меньше вертикальные отступы у заголовков */
+          .qtitle{font-size:0.86rem;font-weight:600;line-height:1.25;margin:0.15rem 0 0.50rem 0;}
+          .variants-title{font-size:0.82rem;font-weight:700;line-height:1.15;margin:0.55rem 0 0.35rem 0; display:block; position:relative; z-index:2;}
           h1, h2, h3 {margin-bottom: 0.3rem;}
 
-          /* на телефоне не даём колонкам переноситься (нужны кнопки навигации в 1 ряд) */
-          div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important; gap: 0.35rem !important;}
-div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
-div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important; flex: 1 1 0% !important;}
-          /* верхнюю панель НЕ прячем — нужен доступ к боковой панели */
-          #MainMenu, footer {display:none !important;}
+          /* БАЗОВЫЕ кнопки (компактно) */
+          .stButton>button {
+            padding: 0.16rem 0.32rem;
+            font-size: 0.78rem;
+            width: 100%;
+            min-width:0 !important;
+            min-height: 1.75rem;
+            white-space: normal !important;
+            border-width:1px !important;
+            box-shadow:none !important;
+            outline:none !important;
+            transition:none !important;
+            line-height: 1.25 !important;
+          }
+          .stButton>button:active, .stButton>button:focus {box-shadow:none !important; outline:none !important; transform:none !important;}
 
+          /* Навигационные ряды: не даём колонкам переноситься, но ТОЛЬКО внутри .nav-row */
+          .nav-row div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important; gap: 0.35rem !important;}
+          .nav-row div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+          .nav-row div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important; flex: 1 1 0% !important;}
+
+          /* Варианты ответа в тестировании (одинаковая геометрия до/после выбора, чтобы ничего не “прыгало”) */
+          .options-list{margin-top:0.10rem;}
+          .options-list div[data-testid="stButton"]{margin: 0.12rem 0 !important;}
+          .options-list .stButton>button{
+            text-align: left !important;
+            padding: 0.18rem 0.34rem !important;
+            min-height: 1.90rem !important;
+            font-size: 0.80rem !important;
+            line-height: 1.25 !important;
+            border-radius: 9px !important;
+          }
+
+          /* Крупные стрелки в разметке */
+          .big-arrows .stButton>button{
+            font-size: 2.00rem !important;
+            min-height: 3.10rem !important;
+            padding: 0.35rem 0.65rem !important;
+            border-radius: 10px !important;
+          }
+
+          /* Карточки вариантов после выбора (тестирование) */
+          .opt-card{
+            border-radius: 9px;
+            margin: 0.12rem 0;
+            padding: 0.18rem 0.34rem;
+            font-size: 0.80rem;
+            line-height: 1.25;
+            min-height: 1.90rem;
+            display: flex;
+            gap: 0.35rem;
+            align-items: flex-start;
+          }
+
+          /* Верхнюю панель НЕ прячем — нужен доступ к боковой панели */
+          #MainMenu, footer {display:none !important;}
 </style>
         """,
         unsafe_allow_html=True
@@ -1974,9 +2009,13 @@ if st.session_state.mode == "Разметка ответов":
             prefix = "✅ " if selected_ans == L else ""
             label = f"{prefix}{L}) {opt_plain}" if opt_plain else f"{prefix}{L})"
 
-            if st.button(label, key=f"mark_pick_{i}_{L}", use_container_width=True):
-                _commit_letter(L)
-                safe_rerun()
+            st.button(
+                label,
+                key=f"mark_pick_{i}_{L}",
+                use_container_width=True,
+                on_click=_commit_letter,
+                args=(L,),
+            )
 
     # --- Основной вывод ---
     view = st.session_state.get("mark_view_mode", "По одному (быстро)")
@@ -1987,20 +2026,45 @@ if st.session_state.mode == "Разметка ответов":
         next_unmarked = find_next_unmarked(idx)
 
         if _COMPACT:
-            n1, n2, n3 = st.columns([1.15, 1.15, 2.7])
+            st.markdown("<div class='nav-row big-arrows'>", unsafe_allow_html=True)
+            n1, n2, n3 = st.columns([1.0, 1.0, 2.7])
             with n1:
-                if st.button("⬅️", disabled=(idx <= 0), key=f"m_prev_{idx}", type="primary"):
-                    set_mark_index(idx - 1)
-                    safe_rerun()
+                st.button(
+                    "◀",
+                    disabled=(idx <= 0),
+                    key=f"m_prev_{idx}",
+                    use_container_width=True,
+                    on_click=set_mark_index,
+                    args=(max(0, idx - 1),),
+                )
             with n2:
-                if st.button("➡️", disabled=(idx >= total - 1), key=f"m_next_{idx}", type="primary"):
-                    set_mark_index(idx + 1)
-                    safe_rerun()
+                st.button(
+                    "▶",
+                    disabled=(idx >= total - 1),
+                    key=f"m_next_{idx}",
+                    use_container_width=True,
+                    on_click=set_mark_index,
+                    args=(min(total - 1, idx + 1),),
+                )
             with n3:
                 st.caption(f"Вопрос {idx+1}/{total}")
-            if st.button("⏭️ Следующий неразмеченный", disabled=(next_unmarked is None), key=f"m_next_unmarked_{idx}"):
-                set_mark_index(int(next_unmarked))
-                safe_rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            if next_unmarked is None:
+                st.button(
+                    "⏭️ Следующий неразмеченный",
+                    disabled=True,
+                    key=f"m_next_unmarked_{idx}",
+                    use_container_width=True,
+                )
+            else:
+                st.button(
+                    "⏭️ Следующий неразмеченный",
+                    key=f"m_next_unmarked_{idx}",
+                    use_container_width=True,
+                    on_click=set_mark_index,
+                    args=(int(next_unmarked),),
+                )
         else:
             nav1, nav2, nav3, nav4 = st.columns([1, 1.8, 1, 5])
             with nav1:
@@ -2295,33 +2359,8 @@ else:
 
     st.markdown("<div class='variants-title'>Варианты</div>", unsafe_allow_html=True)
     
-    # Базовые стили: делаем варианты похожими на “карточки” (как на скрине)
-    st.markdown(
-        """
-        <style>
-          span.optmarker{display:none;}
-    
-          /* стараемся попасть в разные версии Streamlit */
-          div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker),
-          div[data-testid="stContainer"]:has(span.optmarker){
-            border-radius: 9px !important;
-            padding: 0.14rem 0.22rem !important;
-          }
-          div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker) button,
-          div[data-testid="stContainer"]:has(span.optmarker) button{
-            width: 100% !important;
-            min-height: 1.60rem;
-            font-size: 0.78rem !important;
-            padding: 0.12rem 0.26rem !important;
-            border-width:1px !important; box-shadow:none !important; outline:none !important; transition:none !important;
-            text-align: left !important;
-            white-space: normal !important;
-            line-height: 1.2 !important;
-          }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    # Стили вариантов в тестировании задаются глобально через .options-list (компактный CSS)
+
     
     view = prepare_option_view(global_idx, opts)
     
@@ -2349,21 +2388,29 @@ else:
     # Поведение:
     # - пока ответ не выбран: каждый вариант — большая кнопка на всю ширину (кликается по всему тексту)
     # - после выбора: показываем варианты как цветные карточки (зелёный = правильный, красный = выбранный неверный)
+    st.markdown("<div class='options-list'>", unsafe_allow_html=True)
+
     if selected is None:
         for disp, orig in view:
             opt_raw = str(opts.get(orig, ""))
             opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
             opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
             label = f"{disp}) {opt_plain}" if opt_plain else f"{disp})"
-            st.button(label, key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}", use_container_width=True, on_click=_pick_answer, args=(global_idx, orig))
+            st.button(
+                label,
+                key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}",
+                use_container_width=True,
+                on_click=_pick_answer,
+                args=(global_idx, orig),
+            )
     else:
         sel = str(selected)
         corr = str(correct)
         for disp, orig in view:
             opt_raw = str(opts.get(orig, ""))
-            # показываем как текст (без HTML), зато красиво и предсказуемо на телефоне
             opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
             opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
+
             # цвета
             bg = "transparent"
             bd = "rgba(100, 100, 100, 0.35)"
@@ -2375,11 +2422,13 @@ else:
                 bd = "rgba(194, 48, 58, 0.55)"
 
             card = f"""
-<div style='border:1px solid {bd}; background:{bg}; padding:0.16rem 0.32rem; border-radius:9px; margin:0.14rem 0; font-size:0.78rem; line-height:1.2; min-height:1.75rem; display:flex; gap:0.35rem; align-items:flex-start;'>
+<div class='opt-card' style='border:1px solid {bd}; background:{bg};'>
   <span style='font-weight:600; flex:0 0 auto;'>{disp})</span><span style='flex:1; min-width:0;'>{opt_plain}</span>
 </div>
 """
             st.markdown(card, unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Прогресс (в отдельной строке — так кнопки «Назад/Далее» всегда остаются рядом и не «съезжают» на телефоне)
     st.markdown(
@@ -2389,11 +2438,26 @@ else:
     )
 
     # Кнопки навигации снизу (в 1 строку на телефоне)
+    st.markdown("<div class='nav-row'>", unsafe_allow_html=True)
     nL, nR = st.columns([1.0, 1.0])
     with nL:
-        st.button("← назад", on_click=go_prev, disabled=(pos == 0), key=f"nav_back_{st.session_state.test_phase}", use_container_width=True)
+        st.button(
+            "← назад",
+            on_click=go_prev,
+            disabled=(pos == 0),
+            key=f"nav_back_{st.session_state.test_phase}",
+            use_container_width=True,
+        )
     with nR:
-        st.button("далее →", on_click=go_next, disabled=(pos == len(order_indices) - 1), key=f"nav_next_{st.session_state.test_phase}", use_container_width=True)
+        st.button(
+            "далее →",
+            on_click=go_next,
+            disabled=(pos == len(order_indices) - 1),
+            key=f"nav_next_{st.session_state.test_phase}",
+            use_container_width=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
     # Запас снизу, чтобы панель Streamlit Cloud «Управление приложением» не перекрывала кнопку «далее»
     st.markdown("<div style='height:220px'></div>", unsafe_allow_html=True)
