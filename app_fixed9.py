@@ -51,18 +51,20 @@ if _COMPACT:
     st.markdown(
         """
         <style>
+          html, body {font-size: 14px;}
+
           /* уменьшаем верхний отступ и общий вертикальный “воздух” */
-          .block-container {padding-top: 1.0rem; padding-bottom: 12rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
+          .block-container {padding-top: 0.6rem; padding-bottom: 10rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
           /* делаем элементы чуть компактнее */
-          [data-testid="stVerticalBlock"] {gap: 0.35rem;}
+          [data-testid="stVerticalBlock"] {gap: 0.22rem;}
           /* уменьшаем отступы внутри экспандеров */
           details > summary {padding: 0.2rem 0;}
-                  .qtitle{font-size:0.95rem;font-weight:600;line-height:1.2;margin:0.2rem 0 0.6rem 0;}
-          .variants-title{font-size:1.15rem;font-weight:700;line-height:1.15;margin:0.55rem 0 0.15rem 0;}
+                  .qtitle{font-size:0.90rem;font-weight:600;line-height:1.2;margin:0.15rem 0 0.45rem 0;}
+          .variants-title{font-size:0.98rem;font-weight:700;line-height:1.15;margin:0.45rem 0 0.10rem 0;}
 
         
           /* кнопки компактнее */
-          .stButton>button {padding: 0.45rem 0.70rem; font-size: 1.05rem; width: 100%;}
+          .stButton>button {padding: 0.28rem 0.50rem; font-size: 0.90rem; width: 100%;}
           /* чуть меньше вертикальные отступы у заголовков */
           h1, h2, h3 {margin-bottom: 0.3rem;}
 
@@ -2260,18 +2262,18 @@ else:
           /* стараемся попасть в разные версии Streamlit */
           div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker),
           div[data-testid="stContainer"]:has(span.optmarker){
-            border-radius: 12px !important;
-            padding: 0.25rem 0.35rem !important;
+            border-radius: 10px !important;
+            padding: 0.18rem 0.28rem !important;
           }
           div[data-testid="stVerticalBlockBorderWrapper"]:has(span.optmarker) button,
           div[data-testid="stContainer"]:has(span.optmarker) button{
             width: 100% !important;
-            min-height: 2.6rem;
-            font-size: 1.0rem !important;
-            padding: 0.45rem 0.6rem !important;
+            min-height: 2.05rem;
+            font-size: 0.90rem !important;
+            padding: 0.28rem 0.45rem !important;
             text-align: left !important;
             white-space: normal !important;
-            line-height: 1.25 !important;
+            line-height: 1.2 !important;
           }
         </style>
         """,
