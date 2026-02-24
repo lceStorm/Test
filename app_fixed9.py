@@ -94,9 +94,13 @@ if _COMPACT:
 
           /* Варианты ответа в тестировании (одинаковая геометрия до/после выбора, чтобы ничего не “прыгало”) */
           .options-list{margin-top:0.10rem;}
-          .options-list div[data-testid="stButton"]{margin: 0.12rem 0 !important;}
+          .options-list div[data-testid="stButton"]{margin: 0.12rem 0 !important; width:100% !important;}
+          .options-list div[data-testid="stButton"] > div{width:100% !important;}
           .options-list .stButton>button{
             text-align: left !important;
+            width: 100% !important;
+            justify-content: flex-start !important;
+            white-space: normal !important;
             padding: 0.18rem 0.34rem !important;
             min-height: 1.90rem !important;
             font-size: 0.80rem !important;
@@ -110,6 +114,18 @@ if _COMPACT:
             min-height: 3.10rem !important;
             padding: 0.35rem 0.65rem !important;
             border-radius: 10px !important;
+          }
+
+          .big-arrows div[data-testid="stHorizontalBlock"]{
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: stretch !important;
+            gap: 0.45rem !important;
+          }
+          .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+          .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+            min-width: 0 !important;
+            flex: 1 1 0% !important;
           }
 
           /* Карточки вариантов после выбора (тестирование) */
@@ -2006,7 +2022,7 @@ if st.session_state.mode == "Разметка ответов":
             opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
             opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
 
-            prefix = "✅ " if selected_ans == L else ""
+            prefix = "[x] " if selected_ans == L else "[ ] "
             label = f"{prefix}{L}) {opt_plain}" if opt_plain else f"{prefix}{L})"
 
             st.button(
@@ -2027,7 +2043,7 @@ if st.session_state.mode == "Разметка ответов":
 
         if _COMPACT:
             st.markdown("<div class='nav-row big-arrows'>", unsafe_allow_html=True)
-            n1, n2, n3 = st.columns([1.0, 1.0, 2.7])
+            n1, n2, n3 = st.columns([1.0, 2.2, 1.0])
             with n1:
                 st.button(
                     "◀",
@@ -2037,7 +2053,10 @@ if st.session_state.mode == "Разметка ответов":
                     on_click=set_mark_index,
                     args=(max(0, idx - 1),),
                 )
+
             with n2:
+                st.caption(f"Вопрос {idx+1}/{total}")
+            with n3:
                 st.button(
                     "▶",
                     disabled=(idx >= total - 1),
@@ -2046,8 +2065,7 @@ if st.session_state.mode == "Разметка ответов":
                     on_click=set_mark_index,
                     args=(min(total - 1, idx + 1),),
                 )
-            with n3:
-                st.caption(f"Вопрос {idx+1}/{total}")
+
             st.markdown("</div>", unsafe_allow_html=True)
 
             if next_unmarked is None:
@@ -2395,7 +2413,7 @@ else:
             opt_raw = str(opts.get(orig, ""))
             opt_plain = re.sub(r"<[^>]+>", "", opt_raw)
             opt_plain = re.sub(r"\s+", " ", opt_plain).strip()
-            label = f"{disp}) {opt_plain}" if opt_plain else f"{disp})"
+            label = f"[ ] {disp}) {opt_plain}" if opt_plain else f"[ ] {disp})"
             st.button(
                 label,
                 key=f"pick_{st.session_state.test_phase}_{global_idx}_{orig}",
@@ -2420,10 +2438,11 @@ else:
             if sel != corr and str(orig) == sel:
                 bg = "rgba(194, 48, 58, 0.18)"
                 bd = "rgba(194, 48, 58, 0.55)"
+            prefix = "[x] " if str(orig) == sel else "[ ] "
 
             card = f"""
 <div class='opt-card' style='border:1px solid {bd}; background:{bg};'>
-  <span style='font-weight:600; flex:0 0 auto;'>{disp})</span><span style='flex:1; min-width:0;'>{opt_plain}</span>
+  <span style='font-weight:600; flex:0 0 auto;'>{prefix}{disp})</span><span style='flex:1; min-width:0;'>{opt_plain}</span>
 </div>
 """
             st.markdown(card, unsafe_allow_html=True)
