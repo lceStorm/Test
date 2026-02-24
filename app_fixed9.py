@@ -55,7 +55,7 @@ if _COMPACT:
           * { box-sizing: border-box; }
 
           /* уменьшаем верхний отступ и общий вертикальный “воздух” */
-          .block-container {padding-top: 0.35rem; padding-bottom: 8.2rem; padding-left:0.55rem; padding-right:0.55rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
+          .block-container {padding-top: 0.75rem; padding-bottom: 8.2rem; padding-left:0.55rem; padding-right:0.55rem; overflow-x: auto; -webkit-overflow-scrolling: touch;}
           /* делаем элементы чуть компактнее */
           [data-testid="stVerticalBlock"] {gap: 0.16rem;}
           /* уменьшаем отступы внутри экспандеров */
@@ -65,7 +65,7 @@ if _COMPACT:
 
         
           /* кнопки компактнее */
-          .stButton>button {padding: 0.12rem 0.28rem; font-size: 0.78rem; width: 100%; min-width:0 !important; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; border-width:1px !important; box-shadow:none !important; outline:none !important; transition:none !important;}
+          .stButton>button {padding: 0.16rem 0.32rem; font-size: 0.78rem; width: 100%; min-width:0 !important; min-height: 1.75rem; white-space: normal !important; border-width:1px !important; box-shadow:none !important; outline:none !important; transition:none !important;}
           .stButton>button:active, .stButton>button:focus {box-shadow:none !important; outline:none !important; transform:none !important;}
           /* чуть меньше вертикальные отступы у заголовков */
           h1, h2, h3 {margin-bottom: 0.3rem;}
@@ -74,6 +74,11 @@ if _COMPACT:
           div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important; gap: 0.35rem !important;}
 div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
 div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important; flex: 1 1 0% !important;}
+
+
+          /* прячем верхнюю панель Streamlit, чтобы первый виджет (Browse files) не “залезал” под неё */
+          div[data-testid="stToolbar"], header[data-testid="stHeader"], div[data-testid="stHeader"], div[data-testid="stDecoration"] {display:none !important;}
+          #MainMenu, footer {display:none !important;}
 
 </style>
         """,
@@ -2357,8 +2362,8 @@ else:
                 bd = "rgba(194, 48, 58, 0.55)"
 
             card = f"""
-<div style='border:1px solid {bd}; background:{bg}; padding:0.26rem 0.36rem; border-radius:9px; margin:0.18rem 0; font-size:0.78rem; line-height:1.2;'>
-  <span style='font-weight:600; margin-right:0.35rem;'>{disp})</span><span>{opt_plain}</span>
+<div style='border:1px solid {bd}; background:{bg}; padding:0.16rem 0.32rem; border-radius:9px; margin:0.14rem 0; font-size:0.78rem; line-height:1.2; min-height:1.75rem; display:flex; gap:0.35rem; align-items:flex-start;'>
+  <span style='font-weight:600; flex:0 0 auto;'>{disp})</span><span style='flex:1; min-width:0;'>{opt_plain}</span>
 </div>
 """
             st.markdown(card, unsafe_allow_html=True)
