@@ -159,6 +159,40 @@ if _COMPACT:
             margin: 0 !important;
           }
 
+          /* Стрелки "впритык": делаем горизонтальный блок компактным и центрируем */
+          .arrows-tight div[data-testid="stHorizontalBlock"]{
+            justify-content: center !important;
+            gap: 0.08rem !important;
+            flex-wrap: nowrap !important;
+          }
+          .arrows-tight div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+          .arrows-tight div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+            flex: 0 0 auto !important;
+            width: auto !important;
+            min-width: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          
+          .arrows-tight div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(2),
+          .arrows-tight div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2){
+            padding: 0 !important;
+          }
+
+          .arrows-tight div[data-testid="stButton"]{width:auto !important;}
+          .arrows-tight .stButton>button{
+            width: 3.4rem !important;
+            min-width: 3.4rem !important;
+          }
+
+          .arrow-counter{
+            text-align:center;
+            opacity:0.75;
+            font-size:0.95rem;
+            margin-top:0.25rem;
+            margin-bottom:0.12rem;
+          }
+
           /* Карточки вариантов после выбора (тестирование) */
           .opt-card{
             border-radius: 9px;
@@ -2072,31 +2106,33 @@ if st.session_state.mode == "Разметка ответов":
         next_unmarked = find_next_unmarked(idx)
 
         if _COMPACT:
-            st.markdown("<div class='nav-row big-arrows'>", unsafe_allow_html=True)
-            n1, n2, n3 = st.columns([1.0, 2.2, 1.0])
-            with n1:
+            # Стрелки: держим в одной строке и "впритык" (рядом), без растяжения на всю ширину
+            st.markdown("<div class='nav-row big-arrows arrows-tight'>", unsafe_allow_html=True)
+            a1, a2 = st.columns([1, 1])
+            with a1:
                 st.button(
                     "◀",
                     disabled=(idx <= 0),
                     key=f"m_prev_{idx}",
-                    use_container_width=True,
+                    use_container_width=False,
                     on_click=set_mark_index,
                     args=(max(0, idx - 1),),
                 )
-
-            with n2:
-                st.caption(f"Вопрос {idx+1}/{total}")
-            with n3:
+            with a2:
                 st.button(
                     "▶",
                     disabled=(idx >= total - 1),
                     key=f"m_next_{idx}",
-                    use_container_width=True,
+                    use_container_width=False,
                     on_click=set_mark_index,
                     args=(min(total - 1, idx + 1),),
                 )
-
             st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown(
+                f"<div class='arrow-counter'>Вопрос {idx+1}/{total}</div>",
+                unsafe_allow_html=True,
+            )
 
             if next_unmarked is None:
                 st.button(
