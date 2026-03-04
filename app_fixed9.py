@@ -121,20 +121,42 @@ if _COMPACT:
           .big-arrows .stButton>button{
             font-size: 2.00rem !important;
             min-height: 3.10rem !important;
-            padding: 0.35rem 0.65rem !important;
+            padding: 0.35rem 0.45rem !important;
             border-radius: 10px !important;
+            width: 3.6rem !important;
+            min-width: 3.6rem !important;
           }
 
+          /* Стрелки рядом: собираем колонки в центр и делаем стрелочные колонки фиксированной ширины */
           .big-arrows div[data-testid="stHorizontalBlock"]{
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            align-items: stretch !important;
-            gap: 0.45rem !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.18rem !important;
           }
           .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
           .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
             min-width: 0 !important;
-            flex: 1 1 0% !important;
+            flex: 0 0 auto !important;
+            width: auto !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(1),
+          .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1),
+          .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(3),
+          .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3){
+            width: 3.6rem !important;
+            max-width: 3.6rem !important;
+          }
+          .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(2),
+          .big-arrows div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2){
+            white-space: nowrap !important;
+            padding: 0 0.25rem !important;
+          }
+          .big-arrows p, .big-arrows span{
+            margin: 0 !important;
           }
 
           /* Карточки вариантов после выбора (тестирование) */
