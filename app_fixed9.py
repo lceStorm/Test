@@ -92,11 +92,11 @@ if _COMPACT:
           .nav-row div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
           .nav-row div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important; flex: 1 1 0% !important;}
 
-          /* Варианты ответа в тестировании (одинаковая геометрия до/после выбора, чтобы ничего не “прыгало”) */
-          .options-list{margin-top:0.10rem;}
-          .options-list div[data-testid="stButton"]{margin: 0.12rem 0 !important; width:100% !important;}
-          .options-list div[data-testid="stButton"] > div{width:100% !important;}
-          .options-list .stButton>button{
+          /* Кнопки (компакт): ниже/меньше, чтобы всё помещалось на телефоне.
+             Это также убирает "сжатие" вариантов после выбора: до выбора это st.button, после выбора — .opt-card. */
+          div[data-testid="stButton"]{margin: 0.12rem 0 !important; width:100% !important;}
+          div[data-testid="stButton"] > div{width:100% !important;}
+          .stButton>button{
             text-align: left !important;
             width: 100% !important;
             justify-content: flex-start !important;
@@ -106,16 +106,41 @@ if _COMPACT:
             font-size: 0.80rem !important;
             line-height: 1.25 !important;
             border-radius: 9px !important;
+            min-width: 0 !important;
           }
 
-          
-          /* НЕ складывать колонки на телефоне (иначе стрелки/навигация съезжают) */
-          div[data-testid="stHorizontalBlock"]{
+          /* Навигация в разметке: стрелки рядом (впритык), без растягивания на всю ширину */
+          #mark_arrow_anchor + div[data-testid="stHorizontalBlock"]{
+            justify-content: center !important;
             flex-wrap: nowrap !important;
+            gap: 0.16rem !important;
           }
-          div[data-testid="column"]{
+          #mark_arrow_anchor + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+          #mark_arrow_anchor + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
+            flex: 0 0 auto !important;
+            width: auto !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
             min-width: 0 !important;
+          }
+          #mark_arrow_anchor + div[data-testid="stHorizontalBlock"] .stButton>button{
+            font-size: 2.00rem !important;
+            min-height: 3.10rem !important;
+            padding: 0.35rem 0.45rem !important;
+            border-radius: 10px !important;
+            width: 3.6rem !important;
+            min-width: 3.6rem !important;
+          }
+
+          /* Навигация в тестировании: две кнопки в одной строке, без уезда за экран */
+          #test_nav_anchor + div[data-testid="stHorizontalBlock"]{
+            flex-wrap: nowrap !important;
+            gap: 0.35rem !important;
+          }
+          #test_nav_anchor + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+          #test_nav_anchor + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{
             flex: 1 1 0% !important;
+            min-width: 0 !important;
           }
 /* Крупные стрелки в разметке */
           .big-arrows .stButton>button{
@@ -2107,8 +2132,8 @@ if st.session_state.mode == "Разметка ответов":
 
         if _COMPACT:
             # Стрелки: держим в одной строке и "впритык" (рядом), без растяжения на всю ширину
-            st.markdown("<div class='nav-row big-arrows arrows-tight'>", unsafe_allow_html=True)
-            a1, a2 = st.columns([1, 1])
+            st.markdown('<div id="mark_arrow_anchor"></div>', unsafe_allow_html=True)
+            a1, a2 = st.columns([1, 1], gap="small")
             with a1:
                 st.button(
                     "◀",
@@ -2127,8 +2152,6 @@ if st.session_state.mode == "Разметка ответов":
                     on_click=set_mark_index,
                     args=(min(total - 1, idx + 1),),
                 )
-            st.markdown("</div>", unsafe_allow_html=True)
-
             st.markdown(
                 f"<div class='arrow-counter'>Вопрос {idx+1}/{total}</div>",
                 unsafe_allow_html=True,
@@ -2511,8 +2534,6 @@ else:
 """
             st.markdown(card, unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
     # Прогресс (в отдельной строке — так кнопки «Назад/Далее» всегда остаются рядом и не «съезжают» на телефоне)
     st.markdown(
         f"<div style='text-align:center; opacity:0.75; font-size:0.98rem; margin-top:0.35rem; margin-bottom:0.20rem;'>"
@@ -2521,11 +2542,13 @@ else:
     )
 
     # Кнопки навигации снизу (в 1 строку на телефоне)
-    st.markdown("<div class='nav-row'>", unsafe_allow_html=True)
-    nL, nR = st.columns([1.0, 1.0])
+    st.markdown('<div id="test_nav_anchor"></div>', unsafe_allow_html=True)
+    nL, nR = st.columns([1.0, 1.0], gap="small")
+    back_label = "←" if _COMPACT else "← назад"
+    next_label = "→" if _COMPACT else "далее →"
     with nL:
         st.button(
-            "← назад",
+            back_label,
             on_click=go_prev,
             disabled=(pos == 0),
             key=f"nav_back_{st.session_state.test_phase}",
@@ -2533,13 +2556,12 @@ else:
         )
     with nR:
         st.button(
-            "далее →",
+            next_label,
             on_click=go_next,
             disabled=(pos == len(order_indices) - 1),
             key=f"nav_next_{st.session_state.test_phase}",
             use_container_width=True,
         )
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
     # Запас снизу, чтобы панель Streamlit Cloud «Управление приложением» не перекрывала кнопку «далее»
