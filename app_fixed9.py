@@ -54,6 +54,12 @@ if _COMPACT:
           html, body {font-size: 11px;}
           * { box-sizing: border-box; }
 
+          /* На телефоне Streamlit может "складывать" колонки вертикально.
+             В компактном режиме фиксируем колонки в одну строку. */
+          div[data-testid="stHorizontalBlock"]{flex-wrap: nowrap !important;}
+          div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+          div[data-testid="stHorizontalBlock"] > div[data-testid="column"]{min-width:0 !important;}
+
           /* больше места сверху, чтобы uploader не прятался под верхней панелью Streamlit */
           .block-container {
             padding-top: calc(3.4rem + env(safe-area-inset-top));
@@ -218,17 +224,19 @@ if _COMPACT:
             margin-bottom:0.12rem;
           }
 
-          /* Карточки вариантов после выбора (тестирование) */
+          /* Карточки вариантов после выбора (тестирование) — по размерам как кнопки, чтобы ничего не "сжималось" */
           .opt-card{
+            width: 100%;
+            box-sizing: border-box;
             border-radius: 9px;
             margin: 0.12rem 0;
-            padding: 0.18rem 0.34rem;
-            font-size: 0.80rem;
+            padding: 0.16rem 0.32rem;
+            font-size: 0.78rem;
             line-height: 1.25;
-            min-height: 1.90rem;
+            min-height: 1.75rem;
             display: flex;
             gap: 0.35rem;
-            align-items: flex-start;
+            align-items: center;
           }
 
           /* Верхнюю панель НЕ прячем — нужен доступ к боковой панели */
@@ -2133,7 +2141,7 @@ if st.session_state.mode == "Разметка ответов":
         if _COMPACT:
             # Стрелки: держим в одной строке и "впритык" (рядом), без растяжения на всю ширину
             st.markdown('<div id="mark_arrow_anchor"></div>', unsafe_allow_html=True)
-            a1, a2 = st.columns([1, 1], gap="small")
+            a1, a_mid, a2 = st.columns([0.22, 0.56, 0.22], gap="small")
             with a1:
                 st.button(
                     "◀",
@@ -2143,6 +2151,8 @@ if st.session_state.mode == "Разметка ответов":
                     on_click=set_mark_index,
                     args=(max(0, idx - 1),),
                 )
+            with a_mid:
+                st.markdown(f"<div style='text-align:center; opacity:0.75; font-size:0.95rem; padding-top:0.35rem;'>Вопрос {idx+1}/{total}</div>", unsafe_allow_html=True)
             with a2:
                 st.button(
                     "▶",
@@ -2152,10 +2162,6 @@ if st.session_state.mode == "Разметка ответов":
                     on_click=set_mark_index,
                     args=(min(total - 1, idx + 1),),
                 )
-            st.markdown(
-                f"<div class='arrow-counter'>Вопрос {idx+1}/{total}</div>",
-                unsafe_allow_html=True,
-            )
 
             if next_unmarked is None:
                 st.button(
